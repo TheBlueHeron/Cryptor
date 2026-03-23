@@ -10,9 +10,9 @@ public interface ICryptor
     /// <summary>
     /// Converts the input string.
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns>A <see langword="string"/></returns>
-    Task<string> ConvertAsync(string input);
+    /// <param name="input">The input string</param>
+    /// <returns>A <see cref="CryptResult"/>, containing the result output and possibly an error message.</returns>
+    Task<CryptResult> ConvertAsync(string input);
 
     /// <summary>
     /// Gets the settings <see cref="UserControl"/> for this <see cref="ICryptor"/>.

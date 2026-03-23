@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using CryptorApp.ViewModels;
 
-namespace CryptorApp;
+namespace CryptorApp.Views;
 
 /// <summary>
 /// The main application window.

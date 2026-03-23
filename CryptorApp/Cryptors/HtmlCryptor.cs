@@ -1,11 +1,12 @@
-﻿using System.Windows.Controls;
+﻿using System.Web;
+using System.Windows.Controls;
 
 namespace CryptorApp.Cryptors;
 
 /// <summary>
-/// Handles Base64 decoding.
+/// Handles html decoding.
 /// </summary>
-internal sealed class Base64Decryptor : ICryptor
+internal sealed class HtmlDecryptor : ICryptor
 {
     #region Properties
 
@@ -17,7 +18,7 @@ internal sealed class Base64Decryptor : ICryptor
     /// <summary>
     /// Gets the name of the <see cref="ICryptor"/>.
     /// </summary>
-    public string Name => "Base64 Decryption";
+    public string Name => "Html Decoding";
 
     #endregion
 
@@ -26,22 +27,11 @@ internal sealed class Base64Decryptor : ICryptor
     /// <summary>
     /// Decodes the input string.
     /// </summary>
-    /// <param name="input">The Base64 encoded text to decode</param>
+    /// <param name="input">The html-encoded text to decode</param>
     /// <returns>A <see langword="string"/> containing the decoded text</returns>
     public async Task<CryptResult> ConvertAsync(string input)
     {
-        string? msg = null;
-        byte[] bytes;
-        try
-        {
-            bytes = Convert.FromBase64String(input);
-        }
-        catch (Exception ex)
-        {
-            msg = ex.Message;
-            bytes = [];
-        }
-        return new CryptResult { Output = Crypt.BytesToString(bytes), Error = msg };
+        return new CryptResult { Output = HttpUtility.HtmlDecode(input) };
     }
 
     /// <summary>
@@ -58,9 +48,9 @@ internal sealed class Base64Decryptor : ICryptor
 }
 
 /// <summary>
-/// Handles Base64 encoding.
+/// Handles html encoding.
 /// </summary>
-internal sealed class Base64Encryptor : ICryptor
+internal sealed class HtmlEncryptor : ICryptor
 {
     #region Properties
 
@@ -72,20 +62,20 @@ internal sealed class Base64Encryptor : ICryptor
     /// <summary>
     /// Gets the name of the <see cref="ICryptor"/>.
     /// </summary>
-    public string Name => "Base64 Encryption";
+    public string Name => "Html Encoding";
 
     #endregion
 
     #region Methods and functions
 
     /// <summary>
-    /// Base64 encodes the input string.
+    /// Html encodes the input string.
     /// </summary>
     /// <param name="input">The input string</param>
-    /// <returns>A <see cref="CryptResult"/>, containing the result output and possibly an error message.</returns>
+    /// <returns>A <see cref="CryptResult"/>, containing the result output.</returns>
     public async Task<CryptResult> ConvertAsync(string input)
     {
-        return new CryptResult { Output = Convert.ToBase64String(Crypt.StringToBytes(input)) };
+        return new CryptResult { Output = HttpUtility.HtmlEncode(input) };
     }
 
     /// <summary>
