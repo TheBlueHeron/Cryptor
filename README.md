@@ -8,7 +8,7 @@
 [![Forks](https://img.shields.io/github/forks/TheBlueHeron/Cryptor?style=flat)](https://github.com/TheBlueHeron/Cryptor/network)
 [![Issues](https://img.shields.io/github/issues/TheBlueHeron/Cryptor)](https://github.com/TheBlueHeron/Cryptor/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/TheBlueHeron/Cryptor/master)](https://github.com/TheBlueHeron/Cryptor/commits/master)
-[![License](https://img.shields.io/github/license/TheBlueHeron/Cryptor)](LICENSE)
+[![License](https://img.shields.io/github/license/TheBlueHeron/Cryptor)](https://github.com/TheBlueHeron/Cryptor/blob/master/LICENSE.txt)
 
 A lightweight WPF desktop application for encoding, decoding, encrypting, and decrypting text using a variety of algorithms — all from a single, clean interface.
 
