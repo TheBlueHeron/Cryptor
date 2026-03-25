@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 
 namespace CryptorApp;
@@ -6,7 +8,7 @@ namespace CryptorApp;
 /// <summary>
 /// Helper functions.
 /// </summary>
-internal class Crypt
+internal sealed class Crypt
 {
     #region Objects and variables
 
@@ -41,6 +43,33 @@ internal class Crypt
             return [];
         }
         return encoding.GetBytes(input);
+    }
+
+    /// <summary>
+    /// Converts the specified <see cref="SecureString"/> to a byte array using unicode encoding.
+    /// The unmanaged BSTR and the intermediate character buffer are both zeroed immediately after conversion.
+    /// </summary>
+    /// <param name="secureString">The <see cref="SecureString"/> to convert. If null or empty, an empty array is returned</param>
+    /// <returns>A byte array containing the encoded representation, or an empty array if null or empty.</returns>
+    [DebuggerStepThrough]
+    public static byte[] SecureStringToBytes(SecureString secureString)
+    {
+        if (secureString is null || secureString.Length == 0)
+        {
+            return [];
+        }
+        var ptr = Marshal.SecureStringToBSTR(secureString);
+        var chars = new char[secureString.Length];
+        try
+        {
+            Marshal.Copy(ptr, chars, 0, secureString.Length);
+            return encoding.GetBytes(chars);
+        }
+        finally
+        {
+            Array.Clear(chars);
+            Marshal.ZeroFreeBSTR(ptr);
+        }
     }
 
     #endregion

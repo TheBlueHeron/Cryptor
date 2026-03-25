@@ -15,7 +15,7 @@ public partial class MainViewModel : ObservableObject
 
     private const string _ready = "Ready";
 
-    private readonly ObservableCollection<ICryptor> mConverters = [new Base64Decryptor(), new Base64Encryptor(), new HtmlDecryptor(), new HtmlEncryptor(), new UrlDecryptor(), new UrlEncryptor(), new AesDecryptor(), new AesEncryptor()];
+    private readonly ObservableCollection<ICryptor> mConverters = [new Base64Decryptor(), new Base64Encryptor(), new HtmlDecryptor(), new HtmlEncryptor(), new UrlDecryptor(), new UrlEncryptor(), new AesDecryptor(), new AesEncryptor(), new TripleDesDecryptor(), new TripleDesEncryptor()];
 
     private IAsyncRelayCommand mConvertCommand = null!;
     private IAsyncRelayCommand mSelectCommand = null!;
@@ -92,11 +92,20 @@ public partial class MainViewModel : ObservableObject
     /// </summary>
     private async Task HandleConvert()
     {
-        if (CurrentCryptor is ICryptor cryptor && cryptor.IsValid && !string.IsNullOrEmpty(Input))
+        if (CurrentCryptor is ICryptor cryptor && !string.IsNullOrEmpty(Input))
         {
-            var rst = await cryptor.ConvertAsync(Input);
-            Output = rst.Output;
-            Status = rst.Error ?? _ready;
+            var msg = string.Empty;
+            if (cryptor.IsValid(ref msg))
+            {
+                var rst = await cryptor.ConvertAsync(Input);
+                Output = rst.Output;
+                Status = rst.Error ?? _ready;
+            }
+            else
+            {
+                Output = string.Empty;
+                Status = msg ?? _ready;
+            }
         }
         else
         {

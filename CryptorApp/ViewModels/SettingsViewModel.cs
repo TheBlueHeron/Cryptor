@@ -1,7 +1,12 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Security;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CryptorApp.ViewModels;
 
+/// <summary>
+/// Represents a view model that manages cryptographic settings, including the initialization vector and secret key.
+/// </summary>
+/// <remarks>This view model stores sensitive information as SecureString instances to help protect them in memory.</remarks>
 public partial class SettingsViewModel : ObservableObject
 {
     #region Properties
@@ -9,14 +14,12 @@ public partial class SettingsViewModel : ObservableObject
     /// <summary>
     /// Gets or sets the Initialization vector.
     /// </summary>
-    [ObservableProperty]
-    public partial string Iv { get; set; } = string.Empty;
+    public SecureString Iv { get; set; } = new SecureString();
 
     /// <summary>
     /// Gets or sets the secret key.
     /// </summary>
-    [ObservableProperty]
-    public partial string Key { get; set; } = string.Empty;
+    public SecureString Key { get; set; } = new SecureString();
 
     #endregion
 }

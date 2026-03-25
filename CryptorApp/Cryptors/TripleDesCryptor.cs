@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Security.Cryptography;
 using System.Windows.Controls;
 using CryptorApp.Views;
@@ -6,13 +6,14 @@ using CryptorApp.Views;
 namespace CryptorApp.Cryptors;
 
 /// <summary>
-/// Base class for Aes encryption and decryption.
+/// Base class for triple des encryption and decryption.
 /// </summary>
-internal abstract class AesCryptor
+#pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms - TripleDES support is intentional for compatibility
+internal abstract class TripleDesCryptor
 {
     #region Objects and variables
 
-    private const string _VALIDATION = "Requires a Key of 8, 12, or 16 characters and an IV of 8 characters.";
+    private const string _VALIDATION = "Requires a non-weak Key of 8 or 12 characters and an IV of 4 characters.";
 
     private CryptSettings? mSettings;
 
@@ -40,7 +41,7 @@ internal abstract class AesCryptor
 
     /// <summary>
     /// Determines whether the <see cref="ICryptor"/>'s settings are valid.
-    /// Requires a Key of 16, 24, or 32 bytes and an IV of 16 bytes.
+    /// Requires a Key of 16 or 24 bytes, an IV of 8 bytes, and a non-weak key.
     /// </summary>
     /// <param name="msg">Will contain a validation message if validation failed</param>
     public bool IsValid(ref string? msg)
@@ -49,10 +50,11 @@ internal abstract class AesCryptor
         {
             return false;
         }
-
         var keyBytes = Crypt.SecureStringToBytes(mSettings.SettingsViewModel.Key);
         var ivBytes = Crypt.SecureStringToBytes(mSettings.SettingsViewModel.Iv);
-        var valid = keyBytes.Length is 16 or 24 or 32 && ivBytes.Length == 16;
+#pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms - TripleDES support is intentional for compatibility
+        var valid = keyBytes.Length is 16 or 24 && ivBytes.Length == 8 && !TripleDES.IsWeakKey(keyBytes);
+#pragma warning restore CA5350
         Array.Clear(keyBytes);
         Array.Clear(ivBytes);
 
@@ -70,16 +72,20 @@ internal abstract class AesCryptor
 
     #endregion
 }
+#pragma warning restore CA5350
 
 /// <summary>
-/// Handles AES decoding.
+/// Handles Triple DES decoding.
 /// </summary>
-internal sealed class AesDecryptor : AesCryptor, ICryptor
+#pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms - TripleDES support is intentional for compatibility
+internal sealed class TripleDesDecryptor : TripleDesCryptor, ICryptor
 {
     #region Properties
 
-    /// <inheritdoc/>
-    public override string Name => "Aes Decoding";
+    /// <summary>
+    /// Gets the name of the <see cref="ICryptor"/>.
+    /// </summary>
+    public override string Name => "Triple DES Decoding";
 
     #endregion
 
@@ -88,15 +94,15 @@ internal sealed class AesDecryptor : AesCryptor, ICryptor
     /// <summary>
     /// Decodes the input string.
     /// </summary>
-    /// <param name="input">The aes-encoded text to decode</param>
-    /// <returns>A <see langword="string"/> containing the decoded text</returns>
+    /// <param name="input">The triple des-encoded text to decode</param>
+    /// <returns>A <see cref="CryptResult"/> containing the decoded text</returns>
     public async Task<CryptResult> ConvertAsync(string input)
     {
         string? msg = null;
         string? output = null;
         try
         {
-            using var aes = Aes.Create();
+            using var tripleDes = TripleDES.Create();
             var settings = (await GetSettingsAsync()) as CryptSettings;
 
             if (settings is not null)
@@ -106,7 +112,7 @@ internal sealed class AesDecryptor : AesCryptor, ICryptor
                 try
                 {
                     var inputBytes = Convert.FromBase64String(input);
-                    var decryptor = aes.CreateDecryptor(keyBytes, ivBytes);
+                    var decryptor = tripleDes.CreateDecryptor(keyBytes, ivBytes);
                     using var memStream = new MemoryStream(inputBytes);
                     using var cryptoStream = new CryptoStream(memStream, decryptor, CryptoStreamMode.Read);
                     using var memOutput = new MemoryStream();
@@ -129,33 +135,37 @@ internal sealed class AesDecryptor : AesCryptor, ICryptor
 
     #endregion
 }
+#pragma warning restore CA5350
 
 /// <summary>
-/// Handles AES encoding.
+/// Handles Triple DES encoding.
 /// </summary>
-internal sealed class AesEncryptor : AesCryptor, ICryptor
+#pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms - TripleDES support is intentional for compatibility
+internal sealed class TripleDesEncryptor : TripleDesCryptor, ICryptor
 {
     #region Properties
 
-    /// <inheritdoc/>
-    public override string Name => "Aes Encoding";
+    /// <summary>
+    /// Gets the name of the <see cref="ICryptor"/>.
+    /// </summary>
+    public override string Name => "Triple DES Encoding";
 
     #endregion
 
     #region Methods and functions
 
     /// <summary>
-    /// Aes encodes the input string.
+    /// Triple DES encodes the input string.
     /// </summary>
     /// <param name="input">The input string</param>
-    /// <returns>A <see cref="CryptResult"/>, containing the result output.</returns>
+    /// <returns>A <see cref="CryptResult"/> containing the result output.</returns>
     public async Task<CryptResult> ConvertAsync(string input)
     {
         string? msg = null;
         string? output = null;
         try
         {
-            using var aes = Aes.Create();
+            using var tripleDes = TripleDES.Create();
             var settings = (await GetSettingsAsync()) as CryptSettings;
 
             if (settings is not null)
@@ -165,7 +175,7 @@ internal sealed class AesEncryptor : AesCryptor, ICryptor
                 try
                 {
                     var inputBytes = Crypt.StringToBytes(input);
-                    var encryptor = aes.CreateEncryptor(keyBytes, ivBytes);
+                    var encryptor = tripleDes.CreateEncryptor(keyBytes, ivBytes);
                     using var memOutput = new MemoryStream();
                     using var cryptoStream = new CryptoStream(memOutput, encryptor, CryptoStreamMode.Write);
                     await cryptoStream.WriteAsync(inputBytes);
@@ -188,3 +198,4 @@ internal sealed class AesEncryptor : AesCryptor, ICryptor
 
     #endregion
 }
+#pragma warning restore CA5350

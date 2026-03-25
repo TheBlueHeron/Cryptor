@@ -22,7 +22,7 @@ public interface ICryptor
     /// <summary>
     /// Determines whether the <see cref="ICryptor"/>'s settings are valid.
     /// </summary>
-    bool IsValid { get; }
+    bool IsValid(ref string? msg);
 
     /// <summary>
     /// Gets the name of the cryptor.

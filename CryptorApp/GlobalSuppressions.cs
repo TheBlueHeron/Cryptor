@@ -4,3 +4,4 @@ using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Style", "IDE0130:Namespace does not match folder structure", Justification = "No need", Scope = "namespace", Target = "~N:CryptorApp")]
 [assembly: SuppressMessage("Style", "IDE0130:Namespace does not match folder structure", Justification = "No need", Scope = "namespace", Target = "~N:CryptorApp.Cryptors")]
+[assembly: SuppressMessage("Style", "IDE0130:Namespace does not match folder structure", Justification = "No Need", Scope = "namespace", Target = "~N:CryptorApp.Views")]

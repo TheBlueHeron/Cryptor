@@ -11,11 +11,6 @@ internal sealed class HtmlDecryptor : ICryptor
     #region Properties
 
     /// <summary>
-    /// Determines whether the <see cref="ICryptor"/>'s settings are valid. Always <see langword="true"/>.
-    /// </summary>
-    public bool IsValid => true;
-
-    /// <summary>
     /// Gets the name of the <see cref="ICryptor"/>.
     /// </summary>
     public string Name => "Html Decoding";
@@ -40,6 +35,11 @@ internal sealed class HtmlDecryptor : ICryptor
     public async Task<UserControl?> GetSettingsAsync() => null;
 
     /// <summary>
+    /// Determines whether the <see cref="ICryptor"/>'s settings are valid. Always <see langword="true"/>.
+    /// </summary>
+    public bool IsValid(ref string? msg) => true;
+
+    /// <summary>
     /// Returns the <see cref="Name"/> value.
     /// </summary>
     public override string ToString() => Name;
@@ -53,11 +53,6 @@ internal sealed class HtmlDecryptor : ICryptor
 internal sealed class HtmlEncryptor : ICryptor
 {
     #region Properties
-
-    /// <summary>
-    /// Determines whether the <see cref="ICryptor"/>'s settings are valid. Always <see langword="true"/>.
-    /// </summary>
-    public bool IsValid => true;
 
     /// <summary>
     /// Gets the name of the <see cref="ICryptor"/>.
@@ -82,6 +77,11 @@ internal sealed class HtmlEncryptor : ICryptor
     /// Gets the settings <see cref="UserControl"/> for this <see cref="ICryptor"/>. Returns <see langword="null"/>.
     /// </summary>
     public async Task<UserControl?> GetSettingsAsync() => null;
+
+    /// <summary>
+    /// Determines whether the <see cref="ICryptor"/>'s settings are valid. Always <see langword="true"/>.
+    /// </summary>
+    public bool IsValid(ref string? msg) => true;
 
     /// <summary>
     /// Returns the <see cref="Name"/> value.

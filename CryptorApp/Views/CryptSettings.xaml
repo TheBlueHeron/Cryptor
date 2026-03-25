@@ -11,10 +11,13 @@
 			<ColumnDefinition Width="*"/>
 			<ColumnDefinition Width="7*"/>
 		</Grid.ColumnDefinitions>
-		<Label Grid.Column="1" Content="{Binding Title, Mode=OneWay}" FontSize="16" FontWeight="Bold" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
 		<Label VerticalContentAlignment="Center" Content="Key" FontWeight="Bold"/>
-		<TextBox Grid.Column="1" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" Text="{Binding Key, Mode=TwoWay}" />
+		<PasswordBox Grid.Column="1" HorizontalAlignment="Stretch" VerticalContentAlignment="Center"
+					 local:PasswordBoxHelper.MonitorPassword="True"
+					 local:PasswordBoxHelper.SecurePassword="{Binding Key}" />
 		<Label Grid.Row="2" VerticalContentAlignment="Center" Content="Iv" FontWeight="Bold"/>
-		<TextBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" Text="{Binding Iv, Mode=TwoWay}"/>
+		<PasswordBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" VerticalContentAlignment="Center"
+					 local:PasswordBoxHelper.MonitorPassword="True"
+					 local:PasswordBoxHelper.SecurePassword="{Binding Iv}" />
 	</Grid>
 </UserControl>
