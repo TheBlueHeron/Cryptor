@@ -34,7 +34,7 @@ internal abstract class AesCryptor
     /// </summary>
     public async Task<UserControl?> GetSettingsAsync()
     {
-        mSettings ??= new CryptSettings();
+        mSettings ??= new CryptSettings(true);
         return mSettings;
     }
 
@@ -111,7 +111,7 @@ internal sealed class AesDecryptor : AesCryptor, ICryptor
                     using var cryptoStream = new CryptoStream(memStream, decryptor, CryptoStreamMode.Read);
                     using var memOutput = new MemoryStream();
                     await cryptoStream.CopyToAsync(memOutput);
-                    output = Crypt.BytesToString(memOutput.ToArray());
+                    output = Crypt.BytesToString(memOutput.ToArray(), settings.SettingsViewModel.UseUnicode);
                 }
                 finally
                 {
@@ -164,7 +164,7 @@ internal sealed class AesEncryptor : AesCryptor, ICryptor
                 var ivBytes = Crypt.SecureStringToBytes(settings.SettingsViewModel.Iv);
                 try
                 {
-                    var inputBytes = Crypt.StringToBytes(input);
+                    var inputBytes = Crypt.StringToBytes(input, settings.SettingsViewModel.UseUnicode);
                     var encryptor = aes.CreateEncryptor(keyBytes, ivBytes);
                     using var memOutput = new MemoryStream();
                     using var cryptoStream = new CryptoStream(memOutput, encryptor, CryptoStreamMode.Write);

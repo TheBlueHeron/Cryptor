@@ -2,21 +2,22 @@
 			 DataContext="{Binding RelativeSource={RelativeSource Mode=Self}, Path=SettingsViewModel}">
     <Grid Margin="0">
 		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto" MinHeight="36"/>
-			<RowDefinition Height="16"/>
-			<RowDefinition Height="Auto" MinHeight="36"/>
-			<RowDefinition Height="16"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
 		</Grid.RowDefinitions>
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="*"/>
 			<ColumnDefinition Width="7*"/>
 		</Grid.ColumnDefinitions>
-		<Label VerticalContentAlignment="Center" Content="Key" FontWeight="Bold"/>
-		<PasswordBox Grid.Column="1" HorizontalAlignment="Stretch" VerticalContentAlignment="Center"
+		<Label  Margin="0,0,0,16" VerticalContentAlignment="Center" Content="Use Unicode" FontWeight="Bold"/>
+		<CheckBox  Margin="0,0,0,16" Grid.Column="1" VerticalContentAlignment="Center" IsChecked="{Binding UseUnicode, Mode=TwoWay}"></CheckBox>
+		<Label Grid.Row="1" Margin="0,0,0,16" VerticalContentAlignment="Center" Content="Key" FontWeight="Bold" Visibility="{Binding ShowKeyAndIv, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+		<PasswordBox Grid.Column="1" Grid.Row="1"  Margin="0,0,0,16" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" Visibility="{Binding ShowKeyAndIv, Mode=OneWay, Converter={StaticResource BoolToVis}}"
 					 local:PasswordBoxHelper.MonitorPassword="True"
 					 local:PasswordBoxHelper.SecurePassword="{Binding Key}" />
-		<Label Grid.Row="2" VerticalContentAlignment="Center" Content="Iv" FontWeight="Bold"/>
-		<PasswordBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" VerticalContentAlignment="Center"
+		<Label Grid.Row="2"  Margin="0,0,0,16" VerticalContentAlignment="Center" Content="Iv" FontWeight="Bold" Visibility="{Binding ShowKeyAndIv, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
+		<PasswordBox Grid.Row="2" Grid.Column="1"  Margin="0,0,0,16" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" Visibility="{Binding ShowKeyAndIv, Mode=OneWay, Converter={StaticResource BoolToVis}}"
 					 local:PasswordBoxHelper.MonitorPassword="True"
 					 local:PasswordBoxHelper.SecurePassword="{Binding Iv}" />
 	</Grid>

@@ -19,8 +19,9 @@ public partial class CryptSettings : UserControl
     /// <summary>
     /// Creates a new <see cref="CryptSettings"/> control.
     /// </summary>
-    public CryptSettings()
+    public CryptSettings(bool showKeyAndIv)
     {
+        SettingsViewModel.ShowKeyAndIv = showKeyAndIv;
         InitializeComponent();
     }
 

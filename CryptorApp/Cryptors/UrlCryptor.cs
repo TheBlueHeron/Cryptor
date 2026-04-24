@@ -1,19 +1,66 @@
 ﻿using System.Web;
 using System.Windows.Controls;
+using CryptorApp.Views;
 
 namespace CryptorApp.Cryptors;
 
 /// <summary>
+/// Base class for Url encoding and decoding.
+/// </summary>
+internal abstract class UrlCryptor
+{
+    #region Objects and variables
+
+    private CryptSettings? mSettings;
+
+    #endregion
+
+    #region Properties
+
+    /// <summary>
+    /// Gets the name of the <see cref="ICryptor"/>.
+    /// </summary>
+    public abstract string Name { get; }
+
+    #endregion
+
+    #region Public methods and functions
+
+    /// <summary>
+    /// Gets the settings <see cref="UserControl"/> for this <see cref="ICryptor"/>.
+    /// </summary>
+    public async Task<UserControl?> GetSettingsAsync()
+    {
+        mSettings ??= new CryptSettings(false);
+        return mSettings;
+    }
+
+    /// <summary>
+    /// Determines whether the <see cref="ICryptor"/>'s settings are valid. Always <see langword="true"/>.
+    /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Is interface implementation for inheritors")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Is interface implementation for inheritors")]
+    public bool IsValid(ref string? msg) => true;
+
+    /// <summary>
+    /// Returns the <see cref="Name"/> value.
+    /// </summary>
+    public override string ToString() => Name;
+
+    #endregion
+}
+
+/// <summary>
 /// Handles url decoding.
 /// </summary>
-internal sealed class UrlDecryptor : ICryptor
+internal sealed class UrlDecryptor : UrlCryptor, ICryptor
 {
     #region Properties
 
     /// <summary>
     /// Gets the name of the <see cref="ICryptor"/>.
     /// </summary>
-    public string Name => "Url Decoding";
+    public override string Name => "Url Decoding";
 
     #endregion
 
@@ -29,35 +76,20 @@ internal sealed class UrlDecryptor : ICryptor
         return new CryptResult { Output = HttpUtility.UrlDecode(input) };
     }
 
-    /// <summary>
-    /// Gets the settings <see cref="UserControl"/> for this <see cref="ICryptor"/>. Returns <see langword="null"/>.
-    /// </summary>
-    public async Task<UserControl?> GetSettingsAsync() => null;
-
-    /// <summary>
-    /// Determines whether the <see cref="ICryptor"/>'s settings are valid. Always <see langword="true"/>.
-    /// </summary>
-    public bool IsValid(ref string? msg) => true;
-
-    /// <summary>
-    /// Returns the <see cref="Name"/> value.
-    /// </summary>
-    public override string ToString() => Name;
-
     #endregion
 }
 
 /// <summary>
 /// Handles url encoding.
 /// </summary>
-internal sealed class UrlEncryptor : ICryptor
+internal sealed class UrlEncryptor : UrlCryptor, ICryptor
 {
     #region Properties
 
     /// <summary>
     /// Gets the name of the <see cref="ICryptor"/>.
     /// </summary>
-    public string Name => "Url Encoding";
+    public override string Name => "Url Encoding";
 
     #endregion
 
@@ -72,21 +104,6 @@ internal sealed class UrlEncryptor : ICryptor
     {
         return new CryptResult { Output = HttpUtility.UrlEncode(input) };
     }
-
-    /// <summary>
-    /// Gets the settings <see cref="UserControl"/> for this <see cref="ICryptor"/>. Returns <see langword="null"/>.
-    /// </summary>
-    public async Task<UserControl?> GetSettingsAsync() => null;
-
-    /// <summary>
-    /// Determines whether the <see cref="ICryptor"/>'s settings are valid. Always <see langword="true"/>.
-    /// </summary>
-    public bool IsValid(ref string? msg) => true;
-
-    /// <summary>
-    /// Returns the <see cref="Name"/> value.
-    /// </summary>
-    public override string ToString() => Name;
 
     #endregion
 }

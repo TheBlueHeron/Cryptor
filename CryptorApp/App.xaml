@@ -4,5 +4,6 @@
              xmlns:local="clr-namespace:CryptorApp"
              StartupUri="Views/MainWindow.xaml">
     <Application.Resources>
+		<BooleanToVisibilityConverter x:Key="BoolToVis" />
 	</Application.Resources>
 </Application>

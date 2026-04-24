@@ -21,5 +21,15 @@ public partial class SettingsViewModel : ObservableObject
     /// </summary>
     public SecureString Key { get; set; } = new SecureString();
 
+    /// <summary>
+    /// Gets or sets a <see langword="bool"/>, signifying whether to show the Key and Iv settings.
+    /// </summary>
+    public bool ShowKeyAndIv { get; set; }
+
+    /// <summary>
+    /// Gets or sets a <see langword="bool"/>, signifying whether to use unicode when Base64 encoding input and output strings.
+    /// </summary>
+    public bool UseUnicode { get; set; }
+
     #endregion
 }

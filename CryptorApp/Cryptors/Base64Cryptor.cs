@@ -1,18 +1,65 @@
 ﻿using System.Windows.Controls;
+using CryptorApp.Views;
 
 namespace CryptorApp.Cryptors;
 
 /// <summary>
+/// Base class for Base64 encryption and decryption.
+/// </summary>
+internal abstract class Base64Cryptor
+{
+    #region Objects and variables
+
+    private CryptSettings? mSettings;
+
+    #endregion
+
+    #region Properties
+
+    /// <summary>
+    /// Gets the name of the <see cref="ICryptor"/>.
+    /// </summary>
+    public abstract string Name { get; }
+
+    #endregion
+
+    #region Public methods and functions
+
+    /// <summary>
+    /// Gets the settings <see cref="UserControl"/> for this <see cref="ICryptor"/>.
+    /// </summary>
+    public async Task<UserControl?> GetSettingsAsync()
+    {
+        mSettings ??= new CryptSettings(false);
+        return mSettings;
+    }
+
+    /// <summary>
+    /// Determines whether the <see cref="ICryptor"/>'s settings are valid. Always <see langword="true"/>.
+    /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Is interface implementation for inheritors")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Is interface implementation for inheritors")]
+    public bool IsValid(ref string? msg) => true;
+
+    /// <summary>
+    /// Returns the <see cref="Name"/> value.
+    /// </summary>
+    public override string ToString() => Name;
+
+    #endregion
+}
+
+/// <summary>
 /// Handles Base64 decoding.
 /// </summary>
-internal sealed class Base64Decryptor : ICryptor
+internal sealed class Base64Decryptor : Base64Cryptor, ICryptor
 {
     #region Properties
 
     /// <summary>
     /// Gets the name of the <see cref="ICryptor"/>.
     /// </summary>
-    public string Name => "Base64 Decryption";
+    public override string Name => "Base64 Decryption";
 
     #endregion
 
@@ -27,32 +74,24 @@ internal sealed class Base64Decryptor : ICryptor
     {
         string? msg = null;
         byte[] bytes;
+        string? output = null;
+
         try
         {
-            bytes = Convert.FromBase64String(input);
+            var settings = (await GetSettingsAsync()) as CryptSettings;
+
+            if (settings is not null)
+            {
+                bytes = Convert.FromBase64String(input);
+                output = Crypt.BytesToString(bytes, settings.SettingsViewModel.UseUnicode);
+            }
         }
         catch (Exception ex)
         {
             msg = ex.Message;
-            bytes = [];
         }
-        return new CryptResult { Output = Crypt.BytesToString(bytes), Error = msg };
+        return new CryptResult { Output = output, Error = msg };
     }
-
-    /// <summary>
-    /// Gets the settings <see cref="UserControl"/> for this <see cref="ICryptor"/>. Returns <see langword="null"/>.
-    /// </summary>
-    public async Task<UserControl?> GetSettingsAsync() => null;
-
-    /// <summary>
-    /// Determines whether the <see cref="ICryptor"/>'s settings are valid. Always <see langword="true"/>.
-    /// </summary>
-    public bool IsValid(ref string? msg) => true;
-
-    /// <summary>
-    /// Returns the <see cref="Name"/> value.
-    /// </summary>
-    public override string ToString() => Name;
 
     #endregion
 }
@@ -60,14 +99,14 @@ internal sealed class Base64Decryptor : ICryptor
 /// <summary>
 /// Handles Base64 encoding.
 /// </summary>
-internal sealed class Base64Encryptor : ICryptor
+internal sealed class Base64Encryptor : Base64Cryptor, ICryptor
 {
     #region Properties
 
     /// <summary>
     /// Gets the name of the <see cref="ICryptor"/>.
     /// </summary>
-    public string Name => "Base64 Encryption";
+    public override string Name => "Base64 Encryption";
 
     #endregion
 
@@ -80,23 +119,26 @@ internal sealed class Base64Encryptor : ICryptor
     /// <returns>A <see cref="CryptResult"/>, containing the result output and possibly an error message.</returns>
     public async Task<CryptResult> ConvertAsync(string input)
     {
-        return new CryptResult { Output = Convert.ToBase64String(Crypt.StringToBytes(input)) };
+        string? msg = null;
+        byte[] bytes;
+        string? output = null;
+
+        try
+        {
+            var settings = (await GetSettingsAsync()) as CryptSettings;
+
+            if (settings is not null)
+            {
+                bytes = Crypt.StringToBytes(input, settings.SettingsViewModel.UseUnicode);
+                output = Convert.ToBase64String(bytes);
+            }
+        }
+        catch (Exception ex)
+        {
+            msg = ex.Message;
+        }
+        return new CryptResult { Output = output, Error = msg };
     }
-
-    /// <summary>
-    /// Gets the settings <see cref="UserControl"/> for this <see cref="ICryptor"/>. Returns <see langword="null"/>.
-    /// </summary>
-    public async Task<UserControl?> GetSettingsAsync() => null;
-
-    /// <summary>
-    /// Determines whether the <see cref="ICryptor"/>'s settings are valid. Always <see langword="true"/>.
-    /// </summary>
-    public bool IsValid(ref string? msg) => true;
-
-    /// <summary>
-    /// Returns the <see cref="Name"/> value.
-    /// </summary>
-    public override string ToString() => Name;
 
     #endregion
 }
