@@ -1,5 +1,7 @@
 ﻿using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CryptorApp.Cryptors;
@@ -14,6 +16,8 @@ public partial class MainViewModel : ObservableObject
     #region Objects and variables
 
     private const string _ready = "Ready";
+    private static readonly Brush mFallbackNormal = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66));
+    private static readonly Brush mFallbackError  = new SolidColorBrush(Color.FromRgb(0xC4, 0x2B, 0x1C));
 
     private readonly ObservableCollection<ICryptor> mConverters = [new Base64Decryptor(), new Base64Encryptor(), new HtmlDecryptor(), new HtmlEncryptor(), new UrlDecryptor(), new UrlEncryptor(), new AesDecryptor(), new AesEncryptor(), new TripleDesDecryptor(), new TripleDesEncryptor()];
 
@@ -83,9 +87,34 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial string Status { get; set; } = _ready;
 
+    /// <summary>
+    /// Gets the brush to use for the status text — error colour when <see cref="Status"/> contains an error, secondary foreground otherwise.
+    /// </summary>
+    [ObservableProperty]
+    public partial Brush StatusColor { get; set; } = ResolveStatusBrush(false);
+
     #endregion
 
     #region Private methods and functions
+
+    /// <summary>
+    /// Resolves the appropriate status brush from the active theme resources.
+    /// </summary>
+    private static Brush ResolveStatusBrush(bool isError) =>
+        isError
+            ? (Application.Current.Resources["ErrorBrush"] as Brush ?? mFallbackError)
+            : (Application.Current.Resources["SecondaryForegroundBrush"] as Brush ?? mFallbackNormal);
+
+    /// <summary>
+    /// Updates the status message and color.
+    /// </summary>
+    /// <param name="message">The status message to display. If <see langword="null"/>, uses the default ready message</param>
+    /// <param name="isError"><see langword="true"/> if the status represents an error; otherwise, <see langword="false"/></param>
+    private void SetStatus(string? message, bool isError = false)
+    {
+        Status = message ?? _ready;
+        StatusColor = ResolveStatusBrush(isError);
+    }
 
     /// <summary>
     /// Converts the input text, if possible.
@@ -99,18 +128,18 @@ public partial class MainViewModel : ObservableObject
             {
                 var rst = await cryptor.ConvertAsync(Input);
                 Output = rst.Output;
-                Status = rst.Error ?? _ready;
+                SetStatus(rst.Error, isError: rst.Error is not null);
             }
             else
             {
                 Output = string.Empty;
-                Status = msg ?? _ready;
+                SetStatus(msg, isError: true);
             }
         }
         else
         {
             Output = string.Empty;
-            Status = _ready;
+            SetStatus(null);
         }
     }
 

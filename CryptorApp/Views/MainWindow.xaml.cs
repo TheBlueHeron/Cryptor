@@ -26,6 +26,20 @@ public partial class MainWindow : Window
 
     #endregion
 
+    #region Events
+
+    /// <summary>
+    /// Applies the Desktop Window Manager theme based on the current system theme.
+    /// </summary>
+    /// <param name="e">The <see cref="EventArgs"/></param>
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        DwmHelper.Apply(this, App.IsSystemDark());
+    }
+
+    #endregion
+
     #region Properties
 
     /// <summary>
