@@ -1,7 +1,7 @@
 # Cryptor
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/10.0)
-[![C#](https://img.shields.io/badge/C%23-13.0-239120?logo=csharp)](https://learn.microsoft.com/en-us/dotnet/csharp/)
+[![C#](https://img.shields.io/badge/C%23-14.0-239120?logo=csharp)](https://learn.microsoft.com/en-us/dotnet/csharp/)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078D4?logo=windows)](https://www.microsoft.com/windows)
 [![WPF](https://img.shields.io/badge/UI-WPF-0078D4)](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/)
 [![Stars](https://img.shields.io/github/stars/TheBlueHeron/Cryptor?style=flat)](https://github.com/TheBlueHeron/Cryptor/stargazers)
@@ -26,6 +26,8 @@ A lightweight WPF desktop application for encoding, decoding, encrypting, and de
 
 - **MVVM architecture** — built with [CommunityToolkit.Mvvm](https://learn.microsoft.com/en-us/dotnet/communitytoolkit/mvvm/)
 - **Secure key input** — AES and Triple DES keys and IVs are entered via `PasswordBox` and stored as `SecureString`; intermediate byte arrays are zeroed immediately after use
+- **Windows 11 UI theme** — custom implicit styles modelled on the Windows 11 design language (rounded controls, accent blue, Segoe UI Variable typography, slim scrollbars)
+- **Automatic dark / light mode** — reads `AppsUseLightTheme` from the Windows registry on startup and switches live whenever the user changes the system preference in Settings; the native title bar follows via the DWM `DWMWA_USE_IMMERSIVE_DARK_MODE` attribute
 - **Single-file publish** — releases as a self-contained-free, single `win-x64` executable
 
 ---
@@ -81,21 +83,38 @@ CryptorApp/
 ├── Common/
 │   ├── Crypt.cs              # Encoding helpers (StringToBytes, SecureStringToBytes, …)
 │   ├── CryptResult.cs        # Result struct returned by every ICryptor
-│   └── ICryptor.cs           # Shared interface for all encode/decode operations
+│   ├── DwmHelper.cs          # P/Invoke helper to apply dark/light mode to the native title bar
+│   ├── ICryptor.cs           # Shared interface for all encode/decode operations
+│   └── PasswordBoxHelper.cs  # Attached behavior for SecureString ↔ PasswordBox binding
 ├── Cryptors/
 │   ├── AesCryptor.cs         # AES encrypt / decrypt
 │   ├── Base64Cryptor.cs      # Base64 encode / decode
 │   ├── HtmlCryptor.cs        # HTML encode / decode
 │   ├── TripleDesCryptor.cs   # Triple DES encrypt / decrypt
 │   └── UrlCryptor.cs         # URL encode / decode
+├── Themes/
+│   ├── Win11DarkColors.xaml  # Dark palette colour tokens and brushes
+│   ├── Win11LightColors.xaml # Light palette colour tokens and brushes
+│   └── Win11Theme.xaml       # Implicit control styles and templates (DynamicResource)
 ├── ViewModels/
 │   ├── MainViewModel.cs      # Main window view model
 │   └── SettingsViewModel.cs  # Key / IV settings view model
 └── Views/
     ├── CryptSettings.xaml    # Key / IV settings control
-    ├── MainWindow.xaml       # Main application window
-    └── PasswordBoxHelper.cs  # Attached behavior for SecureString ↔ PasswordBox binding
+    └── MainWindow.xaml       # Main application window
 ```
+
+---
+
+## 🎨 Theming
+
+| File | Role |
+|------|------|
+| `Win11LightColors.xaml` | Light palette: colour tokens + named brushes |
+| `Win11DarkColors.xaml`  | Dark palette: colour tokens + named brushes |
+| `Win11Theme.xaml`       | Implicit styles for all controls; all brush references use `DynamicResource` |
+
+`App.xaml.cs` reads the Windows registry key `AppsUseLightTheme` at startup and subscribes to `SystemEvents.UserPreferenceChanged` to swap `MergedDictionaries[0]` at runtime — no restart needed. The native title bar is synchronised via `DwmHelper`, which calls `DwmSetWindowAttribute` with `DWMWA_USE_IMMERSIVE_DARK_MODE`.
 
 ---
 
@@ -103,7 +122,7 @@ CryptorApp/
 
 | Package | Version |
 |---------|---------|
-| [CommunityToolkit.Mvvm](https://www.nuget.org/packages/CommunityToolkit.Mvvm) | 8.4.1 |
+| [CommunityToolkit.Mvvm](https://www.nuget.org/packages/CommunityToolkit.Mvvm) | 8.4.2 |
 | [Microsoft.Xaml.Behaviors.Wpf](https://www.nuget.org/packages/Microsoft.Xaml.Behaviors.Wpf) | 1.1.142 |
 
 ---
