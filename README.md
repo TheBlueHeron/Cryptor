@@ -16,16 +16,20 @@ A lightweight WPF desktop application for encoding, decoding, encrypting, and de
 
 ## ✨ Features
 
-| Algorithm | Encode / Encrypt | Decode / Decrypt |
-|-----------|:----------------:|:----------------:|
-| Base64    | ✅               | ✅               |
-| HTML      | ✅               | ✅               |
-| URL       | ✅               | ✅               |
-| AES       | ✅               | ✅               |
-| Triple DES| ✅               | ✅               |
+| Algorithm          | Encode / Encrypt | Decode / Decrypt |
+|--------------------|:----------------:|:----------------:|
+| Base64             | ✅               | ✅               |
+| Hex                | ✅               | ✅               |
+| HTML               | ✅               | ✅               |
+| URL                | ✅               | ✅               |
+| AES                | ✅               | ✅               |
+| ChaCha20-Poly1305  | ✅               | ✅               |
+| Triple DES         | ✅               | ✅               |
+| SHA-256            | ✅               | —                |
+| SHA-512            | ✅               | —                |
 
 - **MVVM architecture** — built with [CommunityToolkit.Mvvm](https://learn.microsoft.com/en-us/dotnet/communitytoolkit/mvvm/)
-- **Secure key input** — AES and Triple DES keys and IVs are entered via `PasswordBox` and stored as `SecureString`; intermediate byte arrays are zeroed immediately after use
+- **Secure key input** — AES, Triple DES, and ChaCha20-Poly1305 keys and IVs/nonces are entered via `PasswordBox` and stored as `SecureString`; intermediate byte arrays are zeroed immediately after use
 - **Windows 11 UI theme** — custom implicit styles modelled on the Windows 11 design language (rounded controls, accent blue, Segoe UI Variable typography, slim scrollbars)
 - **Automatic dark / light mode** — reads `AppsUseLightTheme` from the Windows registry on startup and switches live whenever the user changes the system preference in Settings; the native title bar follows via the DWM `DWMWA_USE_IMMERSIVE_DARK_MODE` attribute
 - **Single-file publish** — releases as a self-contained-free, single `win-x64` executable
@@ -68,9 +72,10 @@ dotnet publish CryptorApp/CryptorApp.csproj -c Release
 ## 🔐 Usage
 
 1. Select an algorithm from the dropdown list.
-2. For **AES** or **Triple DES**, enter the key and IV in the settings panel:
+2. For **AES**, **Triple DES**, or **ChaCha20-Poly1305**, enter the key and IV/nonce in the settings panel:
    - *AES*: key must be 16, 24, or 32 bytes; IV must be 16 bytes.
    - *Triple DES*: key must be 16 or 24 bytes (non-weak); IV must be 8 bytes.
+   - *ChaCha20-Poly1305*: key must be 16 Unicode characters (32 bytes); nonce (IV) must be 6 Unicode characters (12 bytes).
 3. Paste or type the input text.
 4. Click **Convert** to see the result.
 
@@ -89,7 +94,10 @@ CryptorApp/
 ├── Cryptors/
 │   ├── AesCryptor.cs         # AES encrypt / decrypt
 │   ├── Base64Cryptor.cs      # Base64 encode / decode
+│   ├── ChaCha20Cryptor.cs    # ChaCha20-Poly1305 encrypt / decrypt
+│   ├── HexCryptor.cs         # Hex encode / decode
 │   ├── HtmlCryptor.cs        # HTML encode / decode
+│   ├── ShaCryptor.cs         # SHA-256 / SHA-512 hashing (encode only)
 │   ├── TripleDesCryptor.cs   # Triple DES encrypt / decrypt
 │   └── UrlCryptor.cs         # URL encode / decode
 ├── Themes/
