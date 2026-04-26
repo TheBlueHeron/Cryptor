@@ -19,23 +19,37 @@ public partial class MainViewModel : ObservableObject
     private static readonly Brush mFallbackNormal = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66));
     private static readonly Brush mFallbackError  = new SolidColorBrush(Color.FromRgb(0xC4, 0x2B, 0x1C));
 
-    private readonly ObservableCollection<ICryptor> mConverters = [new Base64Decryptor(), new Base64Encryptor(), new HtmlDecryptor(), new HtmlEncryptor(), new UrlDecryptor(), new UrlEncryptor(), new AesDecryptor(), new AesEncryptor(), new TripleDesDecryptor(), new TripleDesEncryptor()];
+    private readonly ObservableCollection<ICryptor> mAllConverters;
 
     private IAsyncRelayCommand mConvertCommand = null!;
+    private IAsyncRelayCommand<CryptMode> mModeCommand = null!;
     private IAsyncRelayCommand mSelectCommand = null!;
+
+    #endregion
+
+    #region Constructor
+
+    /// <summary>
+    /// Initializes the <see cref="ICryptor"/> collections.
+    /// </summary>
+    public MainViewModel()
+    {
+        mAllConverters = [new Base64Decryptor(), new Base64Encryptor(), new HtmlDecryptor(), new HtmlEncryptor(), new UrlDecryptor(), new UrlEncryptor(), new AesDecryptor(), new AesEncryptor(), new TripleDesDecryptor(), new TripleDesEncryptor()];
+        Converters = new ObservableCollection<ICryptor>(mAllConverters.Where(c => c.Mode == CryptMode.Decode));
+    }
 
     #endregion
 
     #region Properties
 
     /// <summary>
-    /// Returns a <see cref="IAsyncRelayCommand"/> that calls <see cref="HandleConvert"/>.
+    /// Returns a <see cref="IAsyncRelayCommand"/> that calls <see cref="Convert"/>.
     /// </summary>
-    public IAsyncRelayCommand Convert
+    public IAsyncRelayCommand ConvertCommand
     {
         get
         {
-            mConvertCommand ??= new AsyncRelayCommand(HandleConvert);
+            mConvertCommand ??= new AsyncRelayCommand(Convert);
             return mConvertCommand;
         }
     }
@@ -43,7 +57,8 @@ public partial class MainViewModel : ObservableObject
     /// <summary>
     /// Gets the available <see cref="ICryptor"/>s.
     /// </summary>
-    public ObservableCollection<ICryptor> Converters => mConverters;
+    [ObservableProperty]
+    public partial ObservableCollection<ICryptor> Converters { get; set; }
 
     /// <summary>
     /// Gets or sets the currently selected <see cref="ICryptor"/> implementation.
@@ -64,19 +79,31 @@ public partial class MainViewModel : ObservableObject
     public partial string Input { get; set; } = string.Empty;
 
     /// <summary>
+    /// Returns a <see cref="IAsyncRelayCommand"/> that calls <see cref="HandleModeChange"/>.
+    /// </summary>
+    public IAsyncRelayCommand<CryptMode> ModeCommand
+    {
+        get
+        {
+            mModeCommand ??= new AsyncRelayCommand<CryptMode>(HandleModeChange);
+            return mModeCommand;
+        }
+    }
+
+    /// <summary>
     /// Gets or sets the output string.
     /// </summary>
     [ObservableProperty]
     public partial string? Output { get; set; } = string.Empty;
 
     /// <summary>
-    /// Returns a <see cref="IAsyncRelayCommand"/> that calls <see cref="HandleCryptorChange"/>.
+    /// Returns a <see cref="IAsyncRelayCommand"/> that calls <see cref="HandleTypeChange"/>.
     /// </summary>
-    public IAsyncRelayCommand Select
+    public IAsyncRelayCommand SelectCommand
     {
         get
         {
-            mSelectCommand ??= new AsyncRelayCommand(HandleCryptorChange);
+            mSelectCommand ??= new AsyncRelayCommand(HandleTypeChange);
             return mSelectCommand;
         }
     }
@@ -98,28 +125,9 @@ public partial class MainViewModel : ObservableObject
     #region Private methods and functions
 
     /// <summary>
-    /// Resolves the appropriate status brush from the active theme resources.
-    /// </summary>
-    private static Brush ResolveStatusBrush(bool isError) =>
-        isError
-            ? (Application.Current.Resources["ErrorBrush"] as Brush ?? mFallbackError)
-            : (Application.Current.Resources["SecondaryForegroundBrush"] as Brush ?? mFallbackNormal);
-
-    /// <summary>
-    /// Updates the status message and color.
-    /// </summary>
-    /// <param name="message">The status message to display. If <see langword="null"/>, uses the default ready message</param>
-    /// <param name="isError"><see langword="true"/> if the status represents an error; otherwise, <see langword="false"/></param>
-    private void SetStatus(string? message, bool isError = false)
-    {
-        Status = message ?? _ready;
-        StatusColor = ResolveStatusBrush(isError);
-    }
-
-    /// <summary>
     /// Converts the input text, if possible.
     /// </summary>
-    private async Task HandleConvert()
+    private async Task Convert()
     {
         if (CurrentCryptor is ICryptor cryptor && !string.IsNullOrEmpty(Input))
         {
@@ -146,7 +154,29 @@ public partial class MainViewModel : ObservableObject
     /// <summary>
     /// Sets the current settings to the selected <see cref="ICryptor"/>'s settings, if available.
     /// </summary>
-    private async Task HandleCryptorChange()
+    private async Task HandleModeChange(CryptMode mode)
+    {
+        var mPrevIndex = -1;
+
+        if (CurrentCryptor is not null) // remember index to be able to select its equivalent after changing the source collection
+        {
+            mPrevIndex = Converters.IndexOf(CurrentCryptor);
+        }
+        CurrentCryptor = null;
+        CurrentSettings = null;
+        Input = string.Empty;
+        Output = string.Empty;
+        Converters = new ObservableCollection<ICryptor>(mAllConverters.Where(c => c.Mode == mode));
+        if (mPrevIndex >= 0 && Converters.Count > mPrevIndex)
+        {
+            CurrentCryptor = Converters.ElementAt(mPrevIndex);
+        }
+    }
+
+    /// <summary>
+    /// Sets the current settings to the selected <see cref="ICryptor"/>'s settings, if available.
+    /// </summary>
+    private async Task HandleTypeChange()
     {
         CurrentSettings = null;
         Output = string.Empty;
@@ -154,6 +184,25 @@ public partial class MainViewModel : ObservableObject
         {
             CurrentSettings = await CurrentCryptor.GetSettingsAsync();
         }
+    }
+
+    /// <summary>
+    /// Resolves the appropriate status brush from the active theme resources.
+    /// </summary>
+    private static Brush ResolveStatusBrush(bool isError) =>
+        isError
+            ? (Application.Current.Resources["ErrorBrush"] as Brush ?? mFallbackError)
+            : (Application.Current.Resources["SecondaryForegroundBrush"] as Brush ?? mFallbackNormal);
+
+    /// <summary>
+    /// Updates the status message and color.
+    /// </summary>
+    /// <param name="message">The status message to display. If <see langword="null"/>, uses the default ready message</param>
+    /// <param name="isError"><see langword="true"/> if the status represents an error; otherwise, <see langword="false"/></param>
+    private void SetStatus(string? message, bool isError = false)
+    {
+        Status = message ?? _ready;
+        StatusColor = ResolveStatusBrush(isError);
     }
 
     #endregion

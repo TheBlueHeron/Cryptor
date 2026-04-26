@@ -78,6 +78,11 @@ internal sealed class AesDecryptor : AesCryptor, ICryptor
 {
     #region Properties
 
+    /// <summary>
+    /// Gets the <see cref="CryptMode"/>.
+    /// </summary>
+    public CryptMode Mode => CryptMode.Decode;
+
     /// <inheritdoc/>
     public override string Name => "Aes Decoding";
 
@@ -136,6 +141,11 @@ internal sealed class AesDecryptor : AesCryptor, ICryptor
 internal sealed class AesEncryptor : AesCryptor, ICryptor
 {
     #region Properties
+
+    /// <summary>
+    /// Gets the <see cref="CryptMode"/>.
+    /// </summary>
+    public CryptMode Mode => CryptMode.Encode;
 
     /// <inheritdoc/>
     public override string Name => "Aes Encoding";

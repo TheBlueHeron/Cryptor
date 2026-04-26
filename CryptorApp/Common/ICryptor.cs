@@ -25,6 +25,11 @@ public interface ICryptor
     bool IsValid(ref string? msg);
 
     /// <summary>
+    /// The <see cref="CryptMode"/> of the <see cref="ICryptor">.
+    /// </summary>
+    CryptMode Mode { get; }
+
+    /// <summary>
     /// Gets the name of the cryptor.
     /// </summary>
     string Name { get; }

@@ -58,8 +58,11 @@ internal sealed class HtmlDecryptor : HtmlCryptor, ICryptor
     #region Properties
 
     /// <summary>
-    /// Gets the name of the <see cref="ICryptor"/>.
+    /// Gets the <see cref="CryptMode"/>.
     /// </summary>
+    public CryptMode Mode => CryptMode.Decode;
+
+    /// <inheritdoc/>
     public override string Name => "Html Decoding";
 
     #endregion
@@ -87,8 +90,11 @@ internal sealed class HtmlEncryptor : HtmlCryptor, ICryptor
     #region Properties
 
     /// <summary>
-    /// Gets the name of the <see cref="ICryptor"/>.
+    /// Gets the <see cref="CryptMode"/>.
     /// </summary>
+    public CryptMode Mode => CryptMode.Encode;
+
+    /// <inheritdoc/>
     public override string Name => "Html Encoding";
 
     #endregion
