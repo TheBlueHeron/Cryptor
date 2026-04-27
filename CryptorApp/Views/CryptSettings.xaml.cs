@@ -6,7 +6,7 @@ namespace CryptorApp.Views;
 /// <summary>
 /// Interaction logic for CryptSettings.xaml
 /// </summary>
-public partial class CryptSettings : UserControl
+public partial class CryptSettings : UserControl, IDisposable
 {
     #region Objects and variables
 
@@ -14,15 +14,25 @@ public partial class CryptSettings : UserControl
 
     #endregion
 
-    #region Construction
+    #region Construction and destruction
 
     /// <summary>
     /// Creates a new <see cref="CryptSettings"/> control.
     /// </summary>
-    public CryptSettings(bool showKeyAndIv)
+    /// <param name="showKey">Whether to show the Key input row</param>
+    /// <param name="showIv">Whether to show the IV input row</param>
+    public CryptSettings(bool showKey, bool showIv = false)
     {
-        SettingsViewModel.ShowKeyAndIv = showKeyAndIv;
+        SettingsViewModel.ShowKey = showKey;
+        SettingsViewModel.ShowIv = showIv;
         InitializeComponent();
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        mSettingsViewModel?.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     #endregion

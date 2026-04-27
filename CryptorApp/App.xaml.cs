@@ -67,7 +67,7 @@ public partial class App : Application
 
         foreach (Window window in Windows)
         {
-            DwmHelper.Apply(window, dark);
+            NativeMethods.ApplyTheme(window, dark);
         }
     }
 

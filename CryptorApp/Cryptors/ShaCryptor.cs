@@ -7,7 +7,7 @@ namespace CryptorApp.Cryptors;
 /// <summary>
 /// Base class for SHA hashing.
 /// </summary>
-internal abstract class ShaCryptor
+internal abstract class ShaCryptor : IDisposable
 {
     #region Objects and variables
 
@@ -31,7 +31,7 @@ internal abstract class ShaCryptor
     /// </summary>
     public async Task<UserControl?> GetSettingsAsync()
     {
-        mSettings ??= new CryptSettings(false);
+        mSettings ??= new CryptSettings(showKey: false);
         return mSettings;
     }
 
@@ -46,6 +46,9 @@ internal abstract class ShaCryptor
     /// Returns the <see cref="Name"/> value.
     /// </summary>
     public override string ToString() => Name;
+
+    /// <inheritdoc/>
+    public void Dispose() => mSettings?.Dispose();
 
     #endregion
 }
@@ -90,9 +93,9 @@ internal sealed class Sha256Encryptor : ShaCryptor, ICryptor
                 output = Convert.ToHexStringLower(hashBytes);
             }
         }
-        catch (Exception ex)
+        catch
         {
-            msg = ex.Message;
+            msg = Constants.errCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }
@@ -140,9 +143,9 @@ internal sealed class Sha512Encryptor : ShaCryptor, ICryptor
                 output = Convert.ToHexStringLower(hashBytes);
             }
         }
-        catch (Exception ex)
+        catch
         {
-            msg = ex.Message;
+            msg = Constants.errCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }

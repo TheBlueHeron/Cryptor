@@ -7,7 +7,7 @@ namespace CryptorApp.Cryptors;
 /// <summary>
 /// Base class for Html encoding and decoding.
 /// </summary>
-internal abstract class HtmlCryptor
+internal abstract class HtmlCryptor : IDisposable
 {
     #region Objects and variables
 
@@ -46,6 +46,9 @@ internal abstract class HtmlCryptor
     /// Returns the <see cref="Name"/> value.
     /// </summary>
     public override string ToString() => Name;
+
+    /// <inheritdoc/>
+    public void Dispose() => mSettings?.Dispose();
 
     #endregion
 }

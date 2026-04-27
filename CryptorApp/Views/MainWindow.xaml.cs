@@ -26,20 +26,6 @@ public partial class MainWindow : Window
 
     #endregion
 
-    #region Events
-
-    /// <summary>
-    /// Applies the Desktop Window Manager theme based on the current system theme.
-    /// </summary>
-    /// <param name="e">The <see cref="EventArgs"/></param>
-    protected override void OnSourceInitialized(EventArgs e)
-    {
-        base.OnSourceInitialized(e);
-        DwmHelper.Apply(this, App.IsSystemDark());
-    }
-
-    #endregion
-
     #region Properties
 
     /// <summary>
@@ -52,6 +38,30 @@ public partial class MainWindow : Window
             mMainViewModel ??= new();
             return mMainViewModel;
         }
+    }
+
+    #endregion
+
+    #region Events
+
+    /// <summary>
+    /// Disposes the <see cref="MainViewModel"/> and all cryptors when the window closes.
+    /// </summary>
+    protected override void OnClosed(EventArgs e)
+    {
+        base.OnClosed(e);
+        mMainViewModel?.Dispose();
+    }
+
+    /// <summary>
+    /// Applies the Desktop Window Manager theme based on the current system theme and excludes this window from capture.
+    /// </summary>
+    /// <param name="e">The <see cref="EventArgs"/></param>
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        NativeMethods.ApplyTheme(this, App.IsSystemDark());
+        NativeMethods.SetWindowIncludeInCapture(this, false);
     }
 
     #endregion

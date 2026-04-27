@@ -6,7 +6,7 @@ namespace CryptorApp.Cryptors;
 /// <summary>
 /// Base class for hex encoding and decoding.
 /// </summary>
-internal abstract class HexCryptor
+internal abstract class HexCryptor : IDisposable
 {
     #region Objects and variables
 
@@ -45,6 +45,9 @@ internal abstract class HexCryptor
     /// Returns the <see cref="Name"/> value.
     /// </summary>
     public override string ToString() => Name;
+
+    /// <inheritdoc/>
+    public void Dispose() => mSettings?.Dispose();
 
     #endregion
 }
@@ -88,9 +91,9 @@ internal sealed class HexDecryptor : HexCryptor, ICryptor
                 output = Crypt.BytesToString(bytes, settings.SettingsViewModel.UseUnicode);
             }
         }
-        catch (Exception ex)
+        catch
         {
-            msg = ex.Message;
+            msg = Constants.errConvert;
         }
         return new CryptResult { Output = output, Error = msg };
     }
@@ -137,9 +140,9 @@ internal sealed class HexEncryptor : HexCryptor, ICryptor
                 output = Convert.ToHexStringLower(bytes);
             }
         }
-        catch (Exception ex)
+        catch
         {
-            msg = ex.Message;
+            msg = Constants.errConvert;
         }
         return new CryptResult { Output = output, Error = msg };
     }

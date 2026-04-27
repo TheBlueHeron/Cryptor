@@ -11,11 +11,10 @@ namespace CryptorApp.ViewModels;
 /// <summary>
 /// The viewmodel for the main application window (<see cref="MainWindow"/>).
 /// </summary>
-public partial class MainViewModel : ObservableObject
+public partial class MainViewModel : ObservableObject, IDisposable
 {
     #region Objects and variables
 
-    private const string _ready = "Ready";
     private static readonly Brush mFallbackNormal = new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66));
     private static readonly Brush mFallbackError  = new SolidColorBrush(Color.FromRgb(0xC4, 0x2B, 0x1C));
 
@@ -27,7 +26,7 @@ public partial class MainViewModel : ObservableObject
 
     #endregion
 
-    #region Constructor
+    #region Construction and destruction
 
     /// <summary>
     /// Initializes the <see cref="ICryptor"/> collections.
@@ -36,6 +35,16 @@ public partial class MainViewModel : ObservableObject
     {
         mAllConverters = [new Base64Decryptor(), new Base64Encryptor(), new HexDecryptor(), new HexEncryptor(), new HtmlDecryptor(), new HtmlEncryptor(), new UrlDecryptor(), new UrlEncryptor(), new AesDecryptor(), new AesEncryptor(), new ChaCha20Decryptor(), new ChaCha20Encryptor(), new TripleDesDecryptor(), new TripleDesEncryptor(), new Sha256Encryptor(), new Sha512Encryptor()];
         Converters = new ObservableCollection<ICryptor>(mAllConverters.Where(c => c.Mode == CryptMode.Decode));
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        foreach (var cryptor in mAllConverters)
+        {
+            cryptor.Dispose();
+        }
+        GC.SuppressFinalize(this);
     }
 
     #endregion
@@ -112,7 +121,7 @@ public partial class MainViewModel : ObservableObject
     /// Gets or sets the status message.
     /// </summary>
     [ObservableProperty]
-    public partial string Status { get; set; } = _ready;
+    public partial string Status { get; set; } = Constants.READY;
 
     /// <summary>
     /// Gets the brush to use for the status text — error colour when <see cref="Status"/> contains an error, secondary foreground otherwise.
@@ -201,7 +210,7 @@ public partial class MainViewModel : ObservableObject
     /// <param name="isError"><see langword="true"/> if the status represents an error; otherwise, <see langword="false"/></param>
     private void SetStatus(string? message, bool isError = false)
     {
-        Status = message ?? _ready;
+        Status = message ?? Constants.READY;
         StatusColor = ResolveStatusBrush(isError);
     }
 

@@ -6,7 +6,7 @@ namespace CryptorApp.Cryptors;
 /// <summary>
 /// Base class for Base64 encryption and decryption.
 /// </summary>
-internal abstract class Base64Cryptor
+internal abstract class Base64Cryptor : IDisposable
 {
     #region Objects and variables
 
@@ -45,6 +45,9 @@ internal abstract class Base64Cryptor
     /// Returns the <see cref="Name"/> value.
     /// </summary>
     public override string ToString() => Name;
+
+    /// <inheritdoc/>
+    public void Dispose() => mSettings?.Dispose();
 
     #endregion
 }
@@ -89,9 +92,9 @@ internal sealed class Base64Decryptor : Base64Cryptor, ICryptor
                 output = Crypt.BytesToString(bytes, settings.SettingsViewModel.UseUnicode);
             }
         }
-        catch (Exception ex)
+        catch
         {
-            msg = ex.Message;
+            msg = Constants.errCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }
@@ -139,9 +142,9 @@ internal sealed class Base64Encryptor : Base64Cryptor, ICryptor
                 output = Convert.ToBase64String(bytes);
             }
         }
-        catch (Exception ex)
+        catch
         {
-            msg = ex.Message;
+            msg = Constants.errConvert;
         }
         return new CryptResult { Output = output, Error = msg };
     }

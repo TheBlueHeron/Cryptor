@@ -5,7 +5,7 @@ namespace CryptorApp.Cryptors;
 /// <summary>
 /// Interface definition for objects that encode or decode text.
 /// </summary>
-public interface ICryptor
+public interface ICryptor : IDisposable
 {
     /// <summary>
     /// Converts the input string.

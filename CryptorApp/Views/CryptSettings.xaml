@@ -13,15 +13,15 @@
 		<Label VerticalContentAlignment="Center" Content="Use Unicode" FontWeight="SemiBold" Margin="0,0,16,10"/>
 		<CheckBox Grid.Column="1" VerticalContentAlignment="Center" IsChecked="{Binding UseUnicode, Mode=TwoWay}" Margin="0,0,0,10"/>
 		<Label Grid.Row="1" VerticalContentAlignment="Center" Content="Key" FontWeight="SemiBold" Margin="0,0,16,10"
-			   Visibility="{Binding ShowKeyAndIv, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+			   Visibility="{Binding ShowKey, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
 		<PasswordBox Grid.Column="1" Grid.Row="1" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" Margin="0,0,0,10"
-					 Visibility="{Binding ShowKeyAndIv, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+					 Visibility="{Binding ShowKey, Mode=OneWay, Converter={StaticResource BoolToVis}}"
 					 local:PasswordBoxHelper.MonitorPassword="True"
 					 local:PasswordBoxHelper.SecurePassword="{Binding Key}" />
 		<Label Grid.Row="2" VerticalContentAlignment="Center" Content="IV" FontWeight="SemiBold" Margin="0,0,16,0"
-			   Visibility="{Binding ShowKeyAndIv, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
+			   Visibility="{Binding ShowIv, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
 		<PasswordBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" VerticalContentAlignment="Center"
-					 Visibility="{Binding ShowKeyAndIv, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+					 Visibility="{Binding ShowIv, Mode=OneWay, Converter={StaticResource BoolToVis}}"
 					 local:PasswordBoxHelper.MonitorPassword="True"
 					 local:PasswordBoxHelper.SecurePassword="{Binding Iv}" />
 	</Grid>

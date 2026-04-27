@@ -7,15 +7,15 @@ namespace CryptorApp.Cryptors;
 /// <summary>
 /// Base class for ChaCha20-Poly1305 encryption and decryption.
 /// </summary>
-internal abstract class ChaCha20Cryptor
+internal abstract class ChaCha20Cryptor : IDisposable
 {
     #region Objects and variables
 
     private const int _KEY_SIZE   = 32; // 256-bit key
-    private const int _NONCE_SIZE = 12; // 96-bit nonce
+    protected const int _NONCE_SIZE = 12; // 96-bit nonce — generated randomly per call
     protected const int _TAG_SIZE   = 16; // 128-bit authentication tag
 
-    private const string _VALIDATION = "Requires a Key of 16 characters and a Nonce (IV) of 6 characters.";
+    private const string _VALIDATION = "Requires a Key of 16 Unicode characters (32 bytes).";
 
     private CryptSettings? mSettings;
 
@@ -37,13 +37,14 @@ internal abstract class ChaCha20Cryptor
     /// </summary>
     public async Task<UserControl?> GetSettingsAsync()
     {
-        mSettings ??= new CryptSettings(true);
+        mSettings ??= new CryptSettings(showKey: true);
         return mSettings;
     }
 
     /// <summary>
     /// Determines whether the <see cref="ICryptor"/>'s settings are valid.
-    /// Requires a Key of exactly 32 bytes (16 Unicode characters) and a Nonce (IV) of exactly 12 bytes (6 Unicode characters).
+    /// Requires a Key of exactly 32 bytes (16 Unicode characters).
+    /// The nonce is generated randomly per operation and is not user-supplied.
     /// </summary>
     /// <param name="msg">Will contain a validation message if validation failed</param>
     public bool IsValid(ref string? msg)
@@ -53,11 +54,9 @@ internal abstract class ChaCha20Cryptor
             return false;
         }
 
-        var keyBytes   = Crypt.SecureStringToBytes(mSettings.SettingsViewModel.Key);
-        var nonceBytes = Crypt.SecureStringToBytes(mSettings.SettingsViewModel.Iv);
-        var valid = keyBytes.Length == _KEY_SIZE && nonceBytes.Length == _NONCE_SIZE;
+        var keyBytes = Crypt.SecureStringToBytes(mSettings.SettingsViewModel.Key);
+        var valid = keyBytes.Length == _KEY_SIZE;
         Array.Clear(keyBytes);
-        Array.Clear(nonceBytes);
 
         if (!valid)
         {
@@ -71,11 +70,15 @@ internal abstract class ChaCha20Cryptor
     /// </summary>
     public override string ToString() => Name;
 
+    /// <inheritdoc/>
+    public void Dispose() => mSettings?.Dispose();
+
     #endregion
 }
 
 /// <summary>
 /// Handles ChaCha20-Poly1305 decryption.
+/// Expects Base64-encoded input with layout: [12-byte nonce][16-byte tag][ciphertext].
 /// </summary>
 internal sealed class ChaCha20Decryptor : ChaCha20Cryptor, ICryptor
 {
@@ -96,12 +99,13 @@ internal sealed class ChaCha20Decryptor : ChaCha20Cryptor, ICryptor
     /// <summary>
     /// Decrypts the ChaCha20-Poly1305 encrypted input string.
     /// </summary>
-    /// <param name="input">The Base64-encoded encrypted text (tag prepended) to decrypt</param>
+    /// <param name="input">The Base64-encoded encrypted text (nonce + tag + ciphertext) to decrypt</param>
     /// <returns>A <see cref="CryptResult"/> containing the decrypted text</returns>
     public async Task<CryptResult> ConvertAsync(string input)
     {
         string? msg = null;
         string? output = null;
+        var plainText = Array.Empty<byte>();
 
         try
         {
@@ -110,28 +114,28 @@ internal sealed class ChaCha20Decryptor : ChaCha20Cryptor, ICryptor
             if (settings is not null)
             {
                 var keyBytes = Crypt.SecureStringToBytes(settings.SettingsViewModel.Key);
-                var nonceBytes = Crypt.SecureStringToBytes(settings.SettingsViewModel.Iv);
                 try
                 {
                     var inputBytes = Convert.FromBase64String(input);
-                    var tag = inputBytes[.._TAG_SIZE];
-                    var cipherText = inputBytes[_TAG_SIZE..];
-                    var plainText = new byte[cipherText.Length];
+                    var nonce      = inputBytes[.._NONCE_SIZE];
+                    var tag        = inputBytes[_NONCE_SIZE..(_NONCE_SIZE + _TAG_SIZE)];
+                    var cipherText = inputBytes[(_NONCE_SIZE + _TAG_SIZE)..];
+                    plainText = new byte[cipherText.Length];
 
                     using var chacha = new ChaCha20Poly1305(keyBytes);
-                    chacha.Decrypt(nonceBytes, cipherText, tag, plainText);
+                    chacha.Decrypt(nonce, cipherText, tag, plainText);
                     output = Crypt.BytesToString(plainText, settings.SettingsViewModel.UseUnicode);
                 }
                 finally
                 {
                     Array.Clear(keyBytes);
-                    Array.Clear(nonceBytes);
+                    Array.Clear(plainText);
                 }
             }
         }
-        catch (Exception ex)
+        catch
         {
-            msg = ex.Message;
+            msg = Constants.errCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }
@@ -141,6 +145,8 @@ internal sealed class ChaCha20Decryptor : ChaCha20Cryptor, ICryptor
 
 /// <summary>
 /// Handles ChaCha20-Poly1305 encryption.
+/// Output layout (Base64-encoded): [12-byte nonce][16-byte tag][ciphertext].
+/// A fresh random nonce is generated for each call.
 /// </summary>
 internal sealed class ChaCha20Encryptor : ChaCha20Cryptor, ICryptor
 {
@@ -160,7 +166,8 @@ internal sealed class ChaCha20Encryptor : ChaCha20Cryptor, ICryptor
 
     /// <summary>
     /// Encrypts the input string using ChaCha20-Poly1305.
-    /// The 16-byte authentication tag is prepended to the ciphertext before Base64 encoding.
+    /// A fresh random nonce is generated for each call.
+    /// Output layout: nonce + tag + ciphertext, Base64-encoded.
     /// </summary>
     /// <param name="input">The input string</param>
     /// <returns>A <see cref="CryptResult"/> containing the Base64-encoded encrypted output</returns>
@@ -168,6 +175,7 @@ internal sealed class ChaCha20Encryptor : ChaCha20Cryptor, ICryptor
     {
         string? msg = null;
         string? output = null;
+        var plainText = Array.Empty<byte>();
 
         try
         {
@@ -176,32 +184,33 @@ internal sealed class ChaCha20Encryptor : ChaCha20Cryptor, ICryptor
             if (settings is not null)
             {
                 var keyBytes = Crypt.SecureStringToBytes(settings.SettingsViewModel.Key);
-                var nonceBytes = Crypt.SecureStringToBytes(settings.SettingsViewModel.Iv);
                 try
                 {
-                    var plainText = Crypt.StringToBytes(input, settings.SettingsViewModel.UseUnicode);
+                    plainText      = Crypt.StringToBytes(input, settings.SettingsViewModel.UseUnicode);
+                    var nonce      = RandomNumberGenerator.GetBytes(_NONCE_SIZE);
                     var cipherText = new byte[plainText.Length];
-                    var tag = new byte[_TAG_SIZE];
+                    var tag        = new byte[_TAG_SIZE];
 
                     using var chacha = new ChaCha20Poly1305(keyBytes);
-                    chacha.Encrypt(nonceBytes, plainText, cipherText, tag);
+                    chacha.Encrypt(nonce, plainText, cipherText, tag);
 
-                    // Prepend the tag to the ciphertext so the decryptor can recover it
-                    var combined = new byte[tag.Length + cipherText.Length];
-                    tag.CopyTo(combined, 0);
-                    cipherText.CopyTo(combined, tag.Length);
+                    // Layout: nonce + tag + ciphertext
+                    var combined = new byte[_NONCE_SIZE + _TAG_SIZE + cipherText.Length];
+                    nonce.CopyTo(combined, 0);
+                    tag.CopyTo(combined, _NONCE_SIZE);
+                    cipherText.CopyTo(combined, _NONCE_SIZE + _TAG_SIZE);
                     output = Convert.ToBase64String(combined);
                 }
                 finally
                 {
                     Array.Clear(keyBytes);
-                    Array.Clear(nonceBytes);
+                    Array.Clear(plainText);
                 }
             }
         }
-        catch (Exception ex)
+        catch
         {
-            msg = ex.Message;
+            msg = Constants.errCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }

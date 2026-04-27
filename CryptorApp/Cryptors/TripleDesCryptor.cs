@@ -9,11 +9,12 @@ namespace CryptorApp.Cryptors;
 /// Base class for triple des encryption and decryption.
 /// </summary>
 #pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms - TripleDES support is intentional for compatibility
-internal abstract class TripleDesCryptor
+internal abstract class TripleDesCryptor : IDisposable
 {
     #region Objects and variables
 
-    private const string _VALIDATION = "Requires a non-weak Key of 8 or 12 characters and an IV of 4 characters.";
+    private const int _IV_SIZE = 8; // 64-bit IV for TripleDES — generated randomly per call
+    private const string _VALIDATION = "Requires a non-weak Key of 8 or 12 characters.";
 
     private CryptSettings? mSettings;
 
@@ -35,13 +36,14 @@ internal abstract class TripleDesCryptor
     /// </summary>
     public async Task<UserControl?> GetSettingsAsync()
     {
-        mSettings ??= new CryptSettings(true);
+        mSettings ??= new CryptSettings(showKey: true);
         return mSettings;
     }
 
     /// <summary>
     /// Determines whether the <see cref="ICryptor"/>'s settings are valid.
-    /// Requires a Key of 16 or 24 bytes, an IV of 8 bytes, and a non-weak key.
+    /// Requires a Key of 16 or 24 bytes, a non-weak key.
+    /// The IV is generated randomly per operation and is not user-supplied.
     /// </summary>
     /// <param name="msg">Will contain a validation message if validation failed</param>
     public bool IsValid(ref string? msg)
@@ -51,12 +53,10 @@ internal abstract class TripleDesCryptor
             return false;
         }
         var keyBytes = Crypt.SecureStringToBytes(mSettings.SettingsViewModel.Key);
-        var ivBytes = Crypt.SecureStringToBytes(mSettings.SettingsViewModel.Iv);
 #pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms - TripleDES support is intentional for compatibility
-        var valid = keyBytes.Length is 16 or 24 && ivBytes.Length == 8 && !TripleDES.IsWeakKey(keyBytes);
+        var valid = keyBytes.Length is 16 or 24 && !TripleDES.IsWeakKey(keyBytes);
 #pragma warning restore CA5350
         Array.Clear(keyBytes);
-        Array.Clear(ivBytes);
 
         if (!valid)
         {
@@ -70,12 +70,22 @@ internal abstract class TripleDesCryptor
     /// </summary>
     public override string ToString() => Name;
 
+    /// <inheritdoc/>
+    public void Dispose() => mSettings?.Dispose();
+
+    #endregion
+
+    #region Protected helpers
+
+    protected static int IvSize => _IV_SIZE;
+
     #endregion
 }
 #pragma warning restore CA5350
 
 /// <summary>
-/// Handles Triple DES decoding.
+/// Handles Triple DES decryption.
+/// Expects Base64-encoded input with layout: [8-byte IV][ciphertext].
 /// </summary>
 #pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms - TripleDES support is intentional for compatibility
 internal sealed class TripleDesDecryptor : TripleDesCryptor, ICryptor
@@ -95,14 +105,15 @@ internal sealed class TripleDesDecryptor : TripleDesCryptor, ICryptor
     #region Methods and functions
 
     /// <summary>
-    /// Decodes the input string.
+    /// Decrypts the Triple DES encoded input string.
     /// </summary>
-    /// <param name="input">The triple des-encoded text to decode</param>
+    /// <param name="input">The Base64-encoded ciphertext (IV prepended) to decrypt</param>
     /// <returns>A <see cref="CryptResult"/> containing the decoded text</returns>
     public async Task<CryptResult> ConvertAsync(string input)
     {
         string? msg = null;
         string? output = null;
+        byte[]? plainText = null;
         try
         {
             using var tripleDes = TripleDES.Create();
@@ -111,27 +122,33 @@ internal sealed class TripleDesDecryptor : TripleDesCryptor, ICryptor
             if (settings is not null)
             {
                 var keyBytes = Crypt.SecureStringToBytes(settings.SettingsViewModel.Key);
-                var ivBytes = Crypt.SecureStringToBytes(settings.SettingsViewModel.Iv);
                 try
                 {
                     var inputBytes = Convert.FromBase64String(input);
+                    var ivBytes    = inputBytes[..IvSize];
+                    var cipherText = inputBytes[IvSize..];
+
                     var decryptor = tripleDes.CreateDecryptor(keyBytes, ivBytes);
-                    using var memStream = new MemoryStream(inputBytes);
+                    using var memStream = new MemoryStream(cipherText);
                     using var cryptoStream = new CryptoStream(memStream, decryptor, CryptoStreamMode.Read);
                     using var memOutput = new MemoryStream();
                     await cryptoStream.CopyToAsync(memOutput);
-                    output = Crypt.BytesToString(memOutput.ToArray(), settings.SettingsViewModel.UseUnicode);
+                    plainText = memOutput.ToArray();
+                    output = Crypt.BytesToString(plainText, settings.SettingsViewModel.UseUnicode);
                 }
                 finally
                 {
                     Array.Clear(keyBytes);
-                    Array.Clear(ivBytes);
+                    if (plainText is not null)
+                    {
+                        Array.Clear(plainText);
+                    }
                 }
             }
         }
-        catch (Exception ex)
+        catch
         {
-            msg = ex.Message;
+            msg = Constants.errCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }
@@ -141,7 +158,9 @@ internal sealed class TripleDesDecryptor : TripleDesCryptor, ICryptor
 #pragma warning restore CA5350
 
 /// <summary>
-/// Handles Triple DES encoding.
+/// Handles Triple DES encryption.
+/// Output layout (Base64-encoded): [8-byte IV][ciphertext].
+/// A fresh random IV is generated for each call.
 /// </summary>
 #pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms - TripleDES support is intentional for compatibility
 internal sealed class TripleDesEncryptor : TripleDesCryptor, ICryptor
@@ -161,14 +180,15 @@ internal sealed class TripleDesEncryptor : TripleDesCryptor, ICryptor
     #region Methods and functions
 
     /// <summary>
-    /// Triple DES encodes the input string.
+    /// Triple DES encrypts the input string. A fresh random IV is generated for each call.
     /// </summary>
     /// <param name="input">The input string</param>
-    /// <returns>A <see cref="CryptResult"/> containing the result output.</returns>
+    /// <returns>A <see cref="CryptResult"/> containing the Base64-encoded output (IV + ciphertext)</returns>
     public async Task<CryptResult> ConvertAsync(string input)
     {
         string? msg = null;
         string? output = null;
+        var plainText = Array.Empty<byte>();
         try
         {
             using var tripleDes = TripleDES.Create();
@@ -177,27 +197,34 @@ internal sealed class TripleDesEncryptor : TripleDesCryptor, ICryptor
             if (settings is not null)
             {
                 var keyBytes = Crypt.SecureStringToBytes(settings.SettingsViewModel.Key);
-                var ivBytes = Crypt.SecureStringToBytes(settings.SettingsViewModel.Iv);
                 try
                 {
-                    var inputBytes = Crypt.StringToBytes(input, settings.SettingsViewModel.UseUnicode);
-                    var encryptor = tripleDes.CreateEncryptor(keyBytes, ivBytes);
+                    plainText      = Crypt.StringToBytes(input, settings.SettingsViewModel.UseUnicode);
+                    var ivBytes    = RandomNumberGenerator.GetBytes(IvSize);
+                    var encryptor  = tripleDes.CreateEncryptor(keyBytes, ivBytes);
+
                     using var memOutput = new MemoryStream();
                     using var cryptoStream = new CryptoStream(memOutput, encryptor, CryptoStreamMode.Write);
-                    await cryptoStream.WriteAsync(inputBytes);
+                    await cryptoStream.WriteAsync(plainText);
                     await cryptoStream.FlushFinalBlockAsync();
-                    output = Convert.ToBase64String(memOutput.ToArray());
+
+                    // Layout: IV + ciphertext
+                    var cipherText = memOutput.ToArray();
+                    var combined   = new byte[IvSize + cipherText.Length];
+                    ivBytes.CopyTo(combined, 0);
+                    cipherText.CopyTo(combined, IvSize);
+                    output = Convert.ToBase64String(combined);
                 }
                 finally
                 {
                     Array.Clear(keyBytes);
-                    Array.Clear(ivBytes);
+                    Array.Clear(plainText);
                 }
             }
         }
-        catch (Exception ex)
+        catch
         {
-            msg = ex.Message;
+            msg = Constants.errCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }
