@@ -89,9 +89,10 @@ dotnet publish CryptorApp/CryptorApp.csproj -c Release
 ```
 CryptorApp/
 ├── Common/
+|   ├── Constants.cs          # Container for commonly used strings
 │   ├── Crypt.cs              # Encoding helpers (StringToBytes, SecureStringToBytes, …)
 │   ├── CryptResult.cs        # Result struct returned by every ICryptor
-│   ├── DwmHelper.cs          # P/Invoke helper to apply dark/light mode to the native title bar
+│   ├── NativeMethods.cs      # P/Invoke helper to apply dark/light mode to the native title bar and exclude window from capture
 │   ├── ICryptor.cs           # Shared interface for all encode/decode operations
 │   └── PasswordBoxHelper.cs  # Attached behavior for SecureString ↔ PasswordBox binding
 ├── Cryptors/
