@@ -29,7 +29,10 @@ A lightweight WPF desktop application for encoding, decoding, encrypting, and de
 | SHA-512            | ✅               | —                |
 
 - **MVVM architecture** — built with [CommunityToolkit.Mvvm](https://learn.microsoft.com/en-us/dotnet/communitytoolkit/mvvm/)
-- **Secure key input** — AES, Triple DES, and ChaCha20-Poly1305 keys and IVs/nonces are entered via `PasswordBox` and stored as `SecureString`; intermediate byte arrays are zeroed immediately after use
+- **Authenticated encryption** — AES uses **AES-GCM** (replaces unauthenticated CBC); ChaCha20-Poly1305 provides built-in authentication; both resist tampering and padding-oracle attacks
+- **Random IV / nonce per operation** — a cryptographically random IV or nonce is generated for every encryption call and embedded in the output; no IV/nonce is ever reused
+- **Secure key input** — AES, Triple DES, and ChaCha20-Poly1305 keys are entered via `PasswordBox` and stored as `SecureString`; intermediate byte arrays (including plaintext) are zeroed immediately after use
+- **Deterministic key cleanup** — `SecureString` instances are disposed via a full `IDisposable` chain (`MainWindow` → `MainViewModel` → cryptors → `CryptSettings` → `SettingsViewModel`) on window close, zeroing protected memory without waiting for the GC
 - **Windows 11 UI theme** — custom implicit styles modelled on the Windows 11 design language (rounded controls, accent blue, Segoe UI Variable typography, slim scrollbars)
 - **Automatic dark / light mode** — reads `AppsUseLightTheme` from the Windows registry on startup and switches live whenever the user changes the system preference in Settings; the native title bar follows via the DWM `DWMWA_USE_IMMERSIVE_DARK_MODE` attribute
 - **Single-file publish** — releases as a self-contained-free, single `win-x64` executable
@@ -72,10 +75,10 @@ dotnet publish CryptorApp/CryptorApp.csproj -c Release
 ## 🔐 Usage
 
 1. Select an algorithm from the dropdown list.
-2. For **AES**, **Triple DES**, or **ChaCha20-Poly1305**, enter the key and IV/nonce in the settings panel:
-   - *AES*: key must be 16, 24, or 32 bytes; IV must be 16 bytes.
-   - *Triple DES*: key must be 16 or 24 bytes (non-weak); IV must be 8 bytes.
-   - *ChaCha20-Poly1305*: key must be 16 Unicode characters (32 bytes); nonce (IV) must be 6 Unicode characters (12 bytes).
+2. For **AES**, **Triple DES**, or **ChaCha20-Poly1305**, enter the key in the settings panel — a fresh random IV or nonce is generated automatically for every encryption:
+   - *AES*: key must be 16, 24, or 32 bytes (8, 12, or 16 Unicode characters). Uses AES-GCM with a random 12-byte nonce per operation.
+   - *Triple DES*: key must be 16 or 24 bytes (non-weak). A random 8-byte IV is generated per operation.
+   - *ChaCha20-Poly1305*: key must be 16 Unicode characters (32 bytes). A random 12-byte nonce is generated per operation.
 3. Paste or type the input text.
 4. Click **Convert** to see the result.
 
