@@ -2,7 +2,7 @@
 		x:Class="CryptorApp.Views.MainWindow" xmlns:local="clr-namespace:CryptorApp" xmlns:Behaviors="http://schemas.microsoft.com/xaml/behaviors"
 		xmlns:res="clr-namespace:CryptorApp.Resources"
 		DataContext="{Binding RelativeSource={RelativeSource Mode=Self}, Path=MainViewModel}"
-		Title="{x:Static res:Strings.Window_Title}"
+		Title="{x:Static res:Strings.Window_Title}" Height="530" Width="840" MinHeight="428" MinWidth="670"
 		WindowStartupLocation="CenterScreen" FontSize="14" ResizeMode="CanResizeWithGrip"
 		Background="{DynamicResource SurfaceBrush}" Foreground="{DynamicResource ForegroundBrush}" FontFamily="Segoe UI Variable Text, Segoe UI, sans-serif">
 	<Window.Effect>
