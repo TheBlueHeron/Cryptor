@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+using CryptorApp.Resources;
+using System.Security.Cryptography;
 using System.Windows.Controls;
 using CryptorApp.Views;
 
@@ -139,7 +140,7 @@ internal sealed class AesDecryptor : AesCryptor, ICryptor
         }
         catch
         {
-            msg = Constants.errCrypt;
+            msg = Strings.Status_ErrCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }
@@ -210,10 +211,11 @@ internal sealed class AesEncryptor : AesCryptor, ICryptor
         }
         catch
         {
-            msg = Constants.errCrypt;
+            msg = Strings.Status_ErrCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }
 
     #endregion
 }
+

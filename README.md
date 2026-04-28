@@ -35,6 +35,7 @@ A lightweight WPF desktop application for encoding, decoding, encrypting, and de
 - **Deterministic key cleanup** — `SecureString` instances are disposed via a full `IDisposable` chain (`MainWindow` → `MainViewModel` → cryptors → `CryptSettings` → `SettingsViewModel`) on window close, zeroing protected memory without waiting for the GC
 - **Windows 11 UI theme** — custom implicit styles modelled on the Windows 11 design language (rounded controls, accent blue, Segoe UI Variable typography, slim scrollbars)
 - **Automatic dark / light mode** — reads `AppsUseLightTheme` from the Windows registry on startup and switches live whenever the user changes the system preference in Settings; the native title bar follows via the DWM `DWMWA_USE_IMMERSIVE_DARK_MODE` attribute
+- **Localization** — all UI strings and status messages are stored in `.resx` resource files; adding a new language requires only a new `Strings.<culture>.resx` satellite file (e.g. `Strings.de.resx` for German)
 - **Single-file publish** — releases as a self-contained-free, single `win-x64` executable
 
 ---
@@ -89,12 +90,15 @@ dotnet publish CryptorApp/CryptorApp.csproj -c Release
 ```
 CryptorApp/
 ├── Common/
-|   ├── Constants.cs          # Container for commonly used strings
 │   ├── Crypt.cs              # Encoding helpers (StringToBytes, SecureStringToBytes, …)
 │   ├── CryptResult.cs        # Result struct returned by every ICryptor
 │   ├── NativeMethods.cs      # P/Invoke helper to apply dark/light mode to the native title bar and exclude window from capture
 │   ├── ICryptor.cs           # Shared interface for all encode/decode operations
 │   └── PasswordBoxHelper.cs  # Attached behavior for SecureString ↔ PasswordBox binding
+├── Resources/
+│   ├── Strings.resx          # Neutral (English) UI strings and status messages
+│   ├── Strings.Designer.cs   # Auto-generated strongly-typed accessor class
+│   └── Strings.nl.resx       # Dutch translations (sample satellite resource)
 ├── Cryptors/
 │   ├── AesCryptor.cs         # AES encrypt / decrypt
 │   ├── Base64Cryptor.cs      # Base64 encode / decode
@@ -127,6 +131,23 @@ CryptorApp/
 | `Win11Theme.xaml`       | Implicit styles for all controls; all brush references use `DynamicResource` |
 
 `App.xaml.cs` reads the Windows registry key `AppsUseLightTheme` at startup and subscribes to `SystemEvents.UserPreferenceChanged` to swap `MergedDictionaries[0]` at runtime — no restart needed. The native title bar is synchronised via `DwmHelper`, which calls `DwmSetWindowAttribute` with `DWMWA_USE_IMMERSIVE_DARK_MODE`.
+
+---
+
+## 🌍 Localization
+
+All user-facing strings are defined in `Resources/Strings.resx` and accessed via the strongly-typed `Strings` class. XAML views use `{x:Static res:Strings.XYZ}` bindings; ViewModels and cryptors reference `Strings.*` directly.
+
+To add a new language:
+
+1. Copy `Resources/Strings.resx` and rename it `Strings.<culture>.resx` (e.g. `Strings.de.resx` for German).
+2. Translate the `<value>` elements — keep all `<data name="...">` keys identical.
+3. Rebuild. .NET will automatically select the correct satellite assembly based on `Thread.CurrentThread.CurrentUICulture`, which is set from the OS locale by default.
+
+| File | Culture |
+|------|---------|
+| `Strings.resx` | Neutral / English (fallback) |
+| `Strings.nl.resx` | Dutch (`nl`) |
 
 ---
 

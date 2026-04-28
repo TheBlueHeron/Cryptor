@@ -1,3 +1,4 @@
+using CryptorApp.Resources;
 using System.IO;
 using System.Security.Cryptography;
 using System.Windows.Controls;
@@ -148,7 +149,7 @@ internal sealed class TripleDesDecryptor : TripleDesCryptor, ICryptor
         }
         catch
         {
-            msg = Constants.errCrypt;
+            msg = Strings.Status_ErrCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }
@@ -224,7 +225,7 @@ internal sealed class TripleDesEncryptor : TripleDesCryptor, ICryptor
         }
         catch
         {
-            msg = Constants.errCrypt;
+            msg = Strings.Status_ErrCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }
@@ -232,3 +233,4 @@ internal sealed class TripleDesEncryptor : TripleDesCryptor, ICryptor
     #endregion
 }
 #pragma warning restore CA5350
+

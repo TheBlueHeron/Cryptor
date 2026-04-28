@@ -1,3 +1,4 @@
+using CryptorApp.Resources;
 using System.Security.Cryptography;
 using System.Windows.Controls;
 using CryptorApp.Views;
@@ -135,7 +136,7 @@ internal sealed class ChaCha20Decryptor : ChaCha20Cryptor, ICryptor
         }
         catch
         {
-            msg = Constants.errCrypt;
+            msg = Strings.Status_ErrCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }
@@ -210,10 +211,11 @@ internal sealed class ChaCha20Encryptor : ChaCha20Cryptor, ICryptor
         }
         catch
         {
-            msg = Constants.errCrypt;
+            msg = Strings.Status_ErrCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }
 
     #endregion
 }
+

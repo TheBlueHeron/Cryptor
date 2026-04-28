@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+	<value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+	<value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+	<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+	<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Window -->
+  <data name="Window_Title" xml:space="preserve">
+	<value>Cryptor</value>
+  </data>
+
+  <!-- Labels -->
+  <data name="Label_Type" xml:space="preserve">
+	<value>Type</value>
+  </data>
+  <data name="Label_Mode" xml:space="preserve">
+	<value>Modus</value>
+  </data>
+  <data name="Label_Input" xml:space="preserve">
+	<value>Invoer</value>
+  </data>
+  <data name="Label_Output" xml:space="preserve">
+	<value>Uitvoer</value>
+  </data>
+  <data name="Label_UseUnicode" xml:space="preserve">
+	<value>Unicode gebruiken</value>
+  </data>
+  <data name="Label_Key" xml:space="preserve">
+	<value>Sleutel</value>
+  </data>
+  <data name="Label_IV" xml:space="preserve">
+	<value>IV</value>
+  </data>
+
+  <!-- Buttons / actions -->
+  <data name="Button_Convert" xml:space="preserve">
+	<value>Omzetten</value>
+  </data>
+  <data name="Button_Convert_Tooltip" xml:space="preserve">
+	<value>Omzetten</value>
+  </data>
+
+  <!-- Radio buttons -->
+  <data name="Radio_Decode" xml:space="preserve">
+	<value>Decoderen</value>
+  </data>
+  <data name="Radio_Encode" xml:space="preserve">
+	<value>Coderen</value>
+  </data>
+
+  <!-- Status messages -->
+  <data name="Status_Ready" xml:space="preserve">
+	<value>Gereed</value>
+  </data>
+  <data name="Status_ErrCrypt" xml:space="preserve">
+	<value>Omzetting mislukt. Controleer uw unicode- en sleutel-/IV-instellingen.</value>
+  </data>
+  <data name="Status_ErrConvert" xml:space="preserve">
+	<value>Omzetting mislukt. Controleer uw unicode-instelling.</value>
+  </data>
+
+</root>

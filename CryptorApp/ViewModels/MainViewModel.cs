@@ -5,6 +5,7 @@ using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CryptorApp.Cryptors;
+using CryptorApp.Resources;
 
 namespace CryptorApp.ViewModels;
 
@@ -121,7 +122,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// Gets or sets the status message.
     /// </summary>
     [ObservableProperty]
-    public partial string Status { get; set; } = Constants.READY;
+    public partial string Status { get; set; } = Strings.Status_Ready;
 
     /// <summary>
     /// Gets the brush to use for the status text — error colour when <see cref="Status"/> contains an error, secondary foreground otherwise.
@@ -210,7 +211,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// <param name="isError"><see langword="true"/> if the status represents an error; otherwise, <see langword="false"/></param>
     private void SetStatus(string? message, bool isError = false)
     {
-        Status = message ?? Constants.READY;
+        Status = message ?? Strings.Status_Ready;
         StatusColor = ResolveStatusBrush(isError);
     }
 

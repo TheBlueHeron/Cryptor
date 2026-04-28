@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="CryptorApp.Views.CryptSettings" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:CryptorApp.Views" mc:Ignorable="d" d:DesignWidth="800"
+﻿<UserControl x:Class="CryptorApp.Views.CryptSettings" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:CryptorApp.Views" xmlns:res="clr-namespace:CryptorApp.Resources" mc:Ignorable="d" d:DesignWidth="800"
 			 DataContext="{Binding RelativeSource={RelativeSource Mode=Self}, Path=SettingsViewModel}">
 	<Grid Margin="0">
 		<Grid.RowDefinitions>
@@ -10,15 +10,15 @@
 			<ColumnDefinition Width="Auto" MinWidth="64"/>
 			<ColumnDefinition Width="*"/>
 		</Grid.ColumnDefinitions>
-		<Label VerticalContentAlignment="Center" Content="Use Unicode" FontWeight="SemiBold" Margin="0,0,16,10"/>
+		<Label VerticalContentAlignment="Center" Content="{x:Static res:Strings.Label_UseUnicode}" FontWeight="SemiBold" Margin="0,0,16,10"/>
 		<CheckBox Grid.Column="1" VerticalContentAlignment="Center" IsChecked="{Binding UseUnicode, Mode=TwoWay}" Margin="0,0,0,10"/>
-		<Label Grid.Row="1" VerticalContentAlignment="Center" Content="Key" FontWeight="SemiBold" Margin="0,0,16,10"
+		<Label Grid.Row="1" VerticalContentAlignment="Center" Content="{x:Static res:Strings.Label_Key}" FontWeight="SemiBold" Margin="0,0,16,10"
 			   Visibility="{Binding ShowKey, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
 		<PasswordBox Grid.Column="1" Grid.Row="1" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" Margin="0,0,0,10"
 					 Visibility="{Binding ShowKey, Mode=OneWay, Converter={StaticResource BoolToVis}}"
 					 local:PasswordBoxHelper.MonitorPassword="True"
 					 local:PasswordBoxHelper.SecurePassword="{Binding Key}" />
-		<Label Grid.Row="2" VerticalContentAlignment="Center" Content="IV" FontWeight="SemiBold" Margin="0,0,16,0"
+		<Label Grid.Row="2" VerticalContentAlignment="Center" Content="{x:Static res:Strings.Label_IV}" FontWeight="SemiBold" Margin="0,0,16,0"
 			   Visibility="{Binding ShowIv, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
 		<PasswordBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" VerticalContentAlignment="Center"
 					 Visibility="{Binding ShowIv, Mode=OneWay, Converter={StaticResource BoolToVis}}"

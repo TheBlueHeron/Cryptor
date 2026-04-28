@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+using CryptorApp.Resources;
+using System.Windows.Controls;
 using CryptorApp.Views;
 
 namespace CryptorApp.Cryptors;
@@ -94,7 +95,7 @@ internal sealed class Base64Decryptor : Base64Cryptor, ICryptor
         }
         catch
         {
-            msg = Constants.errCrypt;
+            msg = Strings.Status_ErrCrypt;
         }
         return new CryptResult { Output = output, Error = msg };
     }
@@ -144,10 +145,11 @@ internal sealed class Base64Encryptor : Base64Cryptor, ICryptor
         }
         catch
         {
-            msg = Constants.errConvert;
+            msg = Strings.Status_ErrConvert;
         }
         return new CryptResult { Output = output, Error = msg };
     }
 
     #endregion
 }
+

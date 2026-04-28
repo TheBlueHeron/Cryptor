@@ -12,6 +12,14 @@
 		<AssemblyVersion>1.2.0.0</AssemblyVersion>
 		<FileVersion>1.2.0.0</FileVersion>
 		<Version>1.2.0</Version>
+		<Title>Cryptor</Title>
+		<Description>Basic encryption and decryption for personal use.</Description>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/TheBlueHeron/Cryptor</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageIcon>cryptor.png</PackageIcon>
+		<PackageProjectUrl>https://github.com/TheBlueHeron/Cryptor/releases/latest</PackageProjectUrl>
+		<NeutralLanguage>en-US</NeutralLanguage>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -27,7 +35,30 @@
 		<Page Remove="Assets\**" />
 	</ItemGroup>
 	<ItemGroup>
+	  <None Include="..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	</ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Update="Resources\Strings.resx">
+			<Generator>PublicResXFileCodeGenerator</Generator>
+			<LastGenOutput>Strings.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+		<Compile Update="Resources\Strings.Designer.cs">
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Strings.resx</DependentUpon>
+			<DesignTime>True</DesignTime>
+		</Compile>
+	</ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Update="cryptor.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 </Project>

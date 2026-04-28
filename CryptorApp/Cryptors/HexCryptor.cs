@@ -1,3 +1,4 @@
+using CryptorApp.Resources;
 using System.Windows.Controls;
 using CryptorApp.Views;
 
@@ -93,7 +94,7 @@ internal sealed class HexDecryptor : HexCryptor, ICryptor
         }
         catch
         {
-            msg = Constants.errConvert;
+            msg = Strings.Status_ErrConvert;
         }
         return new CryptResult { Output = output, Error = msg };
     }
@@ -142,10 +143,11 @@ internal sealed class HexEncryptor : HexCryptor, ICryptor
         }
         catch
         {
-            msg = Constants.errConvert;
+            msg = Strings.Status_ErrConvert;
         }
         return new CryptResult { Output = output, Error = msg };
     }
 
     #endregion
 }
+
