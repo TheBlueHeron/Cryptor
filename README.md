@@ -22,17 +22,22 @@ A lightweight WPF desktop application for encoding, decoding, encrypting, and de
 | Hex                | ✅               | ✅               |
 | HTML               | ✅               | ✅               |
 | URL                | ✅               | ✅               |
-| AES                | ✅               | ✅               |
+| AES-GCM            | ✅               | ✅               |
+| AES-CCM            | ✅               | ✅               |
+| AES-CNG (CBC)      | ✅               | ✅               |
 | ChaCha20-Poly1305  | ✅               | ✅               |
 | Triple DES         | ✅               | ✅               |
 | SHA-256            | ✅               | —                |
 | SHA-512            | ✅               | —                |
 
 - **MVVM architecture** — built with [CommunityToolkit.Mvvm](https://learn.microsoft.com/en-us/dotnet/communitytoolkit/mvvm/)
-- **Authenticated encryption** — AES uses **AES-GCM** (replaces unauthenticated CBC); ChaCha20-Poly1305 provides built-in authentication; both resist tampering and padding-oracle attacks
+- **Authenticated encryption** — AES-GCM and AES-CCM are AEAD ciphers that provide both confidentiality and integrity; ChaCha20-Poly1305 provides built-in authentication; all resist tampering and padding-oracle attacks
 - **Random IV / nonce per operation** — a cryptographically random IV or nonce is generated for every encryption call and embedded in the output; no IV/nonce is ever reused
 - **Secure key input** — AES, Triple DES, and ChaCha20-Poly1305 keys are entered via `PasswordBox` and stored as `SecureString`; intermediate byte arrays (including plaintext) are zeroed immediately after use
 - **Deterministic key cleanup** — `SecureString` instances are disposed via a full `IDisposable` chain (`MainWindow` → `MainViewModel` → cryptors → `CryptSettings` → `SettingsViewModel`) on window close, zeroing protected memory without waiting for the GC
+- **Shared cryptor base** — all cryptors extend a common `CryptorBase` class that handles lazy settings initialisation, `IDisposable` (with `GC.SuppressFinalize`), and settings validation, eliminating duplication across implementations
+- **Allocation-efficient async** — methods with no genuine async I/O return `Task.FromResult` directly instead of generating a compiler state machine; only `CryptoStream`-based operations (`AesCng`, `TripleDES`) use true `async`/`await`
+- **RFC 3986 URL encoding** — URL encode/decode uses `Uri.EscapeDataString` / `Uri.UnescapeDataString` (percent-encoding, spaces as `%20`) instead of the HTML form convention (`+`)
 - **Windows 11 UI theme** — custom implicit styles modelled on the Windows 11 design language (rounded controls, accent blue, Segoe UI Variable typography, slim scrollbars)
 - **Automatic dark / light mode** — reads `AppsUseLightTheme` from the Windows registry on startup and switches live whenever the user changes the system preference in Settings; the native title bar follows via the DWM `DWMWA_USE_IMMERSIVE_DARK_MODE` attribute
 - **Localization** — all UI strings and status messages are stored in `.resx` resource files; adding a new language requires only a new `Strings.<culture>.resx` satellite file (e.g. `Strings.de.resx` for German)
@@ -77,9 +82,11 @@ dotnet publish CryptorApp/CryptorApp.csproj -c Release
 
 1. Select an algorithm from the dropdown list.
 2. For **AES**, **Triple DES**, or **ChaCha20-Poly1305**, enter the key in the settings panel — a fresh random IV or nonce is generated automatically for every encryption:
-   - *AES*: key must be 16, 24, or 32 bytes (8, 12, or 16 Unicode characters). Uses AES-GCM with a random 12-byte nonce per operation.
-   - *Triple DES*: key must be 16 or 24 bytes (non-weak). A random 8-byte IV is generated per operation.
-   - *ChaCha20-Poly1305*: key must be 16 Unicode characters (32 bytes). A random 12-byte nonce is generated per operation.
+   - *AES-GCM*: key must be 16, 24, or 32 bytes (8, 12, or 16 Unicode characters). Uses AES-GCM (AEAD) with a random 12-byte nonce per operation. Output layout: `[nonce][tag][ciphertext]`.
+   - *AES-CCM*: same key sizes as AES-GCM. Uses AES-CCM (AEAD) with a random 12-byte nonce per operation. Output layout: `[nonce][tag][ciphertext]`.
+   - *AES-CNG (CBC)*: same key sizes as AES-GCM. Uses AES in CBC mode via the Windows CNG provider with a random 16-byte IV per operation. **Note:** CBC is not authenticated — prefer AES-GCM or AES-CCM when integrity matters. Output layout: `[IV][ciphertext]`.
+   - *Triple DES*: key must be 16 or 24 bytes (non-weak). A random 8-byte IV is generated per operation. Output layout: `[IV][ciphertext]`.
+   - *ChaCha20-Poly1305*: key must be 16 Unicode characters (32 bytes). A random 12-byte nonce is generated per operation. Output layout: `[nonce][tag][ciphertext]`.
 3. Paste or type the input text.
 4. Click **Convert** to see the result.
 
@@ -91,7 +98,7 @@ dotnet publish CryptorApp/CryptorApp.csproj -c Release
 CryptorApp/
 ├── Common/
 │   ├── Crypt.cs              # Encoding helpers (StringToBytes, SecureStringToBytes, …)
-│   ├── CryptResult.cs        # Result struct returned by every ICryptor
+│   ├── CryptResult.cs        # Immutable readonly record struct returned by every ICryptor
 │   ├── NativeMethods.cs      # P/Invoke helper to apply dark/light mode to the native title bar and exclude window from capture
 │   ├── ICryptor.cs           # Shared interface for all encode/decode operations
 │   └── PasswordBoxHelper.cs  # Attached behavior for SecureString ↔ PasswordBox binding
@@ -100,14 +107,17 @@ CryptorApp/
 │   ├── Strings.Designer.cs   # Auto-generated strongly-typed accessor class
 │   └── Strings.nl.resx       # Dutch translations (sample satellite resource)
 ├── Cryptors/
-│   ├── AesCryptor.cs         # AES encrypt / decrypt
+│   ├── CryptorBase.cs        # Shared abstract base class for all cryptors
+│   ├── AesCcmCryptor.cs      # AES-CCM (AEAD) encrypt / decrypt
+│   ├── AesCngCryptor.cs      # AES-CNG / CBC encrypt / decrypt
+│   ├── AesGcmCryptor.cs      # AES-GCM (AEAD) encrypt / decrypt
 │   ├── Base64Cryptor.cs      # Base64 encode / decode
 │   ├── ChaCha20Cryptor.cs    # ChaCha20-Poly1305 encrypt / decrypt
 │   ├── HexCryptor.cs         # Hex encode / decode
 │   ├── HtmlCryptor.cs        # HTML encode / decode
 │   ├── ShaCryptor.cs         # SHA-256 / SHA-512 hashing (encode only)
 │   ├── TripleDesCryptor.cs   # Triple DES encrypt / decrypt
-│   └── UrlCryptor.cs         # URL encode / decode
+│   └── UrlCryptor.cs         # URL encode / decode (RFC 3986)
 ├── Themes/
 │   ├── Win11DarkColors.xaml  # Dark palette colour tokens and brushes
 │   ├── Win11LightColors.xaml # Light palette colour tokens and brushes
