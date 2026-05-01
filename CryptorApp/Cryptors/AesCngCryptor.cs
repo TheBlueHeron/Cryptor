@@ -5,15 +5,14 @@ using System.Security.Cryptography;
 namespace CryptorApp.Cryptors;
 
 /// <summary>
-/// Base class for triple des encryption and decryption.
+/// Base class for AES-CNG (CBC mode) encryption and decryption.
 /// </summary>
-#pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms - TripleDES support is intentional for compatibility
-internal abstract class TripleDesCryptor : CryptorBase
+internal abstract class AesCngCryptor : CryptorBase
 {
     #region Objects and variables
 
-    private const int _IV_SIZE = 8; // 64-bit IV for TripleDES — generated randomly per call
-    private const string _VALIDATION = "Requires a non-weak Key of 8 or 12 characters.";
+    private const int _IV_SIZE = 16; // 128-bit IV for AES-CBC — generated randomly per call
+    private const string _VALIDATION = "Requires a Key of 16, 24, or 32 bytes (8, 12, or 16 Unicode characters).";
 
     protected static int IvSize => _IV_SIZE;
 
@@ -22,7 +21,7 @@ internal abstract class TripleDesCryptor : CryptorBase
     #region Properties
 
     /// <inheritdoc/>
-    public override string Name => "Triple DES";
+    public override string Name => "Aes (CNG) CBC Mode";
 
     /// <inheritdoc/>
     protected override bool ShowKey => true;
@@ -33,7 +32,7 @@ internal abstract class TripleDesCryptor : CryptorBase
 
     /// <summary>
     /// Determines whether the <see cref="ICryptor"/>'s settings are valid.
-    /// Requires a Key of 16 or 24 bytes, a non-weak key.
+    /// Requires a Key of 16, 24, or 32 bytes (8, 12, or 16 Unicode characters).
     /// The IV is generated randomly per operation and is not user-supplied.
     /// </summary>
     /// <param name="msg">Will contain a validation message if validation failed</param>
@@ -45,10 +44,9 @@ internal abstract class TripleDesCryptor : CryptorBase
         {
             return false;
         }
+
         var keyBytes = Crypt.SecureStringToBytes(settings.SettingsViewModel.Key);
-#pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms - TripleDES support is intentional for compatibility
-        var valid = keyBytes.Length is 16 or 24 && !TripleDES.IsWeakKey(keyBytes);
-#pragma warning restore CA5350
+        var valid = keyBytes.Length is 16 or 24 or 32;
         Array.Clear(keyBytes);
 
         if (!valid)
@@ -60,14 +58,12 @@ internal abstract class TripleDesCryptor : CryptorBase
 
     #endregion
 }
-#pragma warning restore CA5350
 
 /// <summary>
-/// Handles Triple DES decryption.
-/// Expects Base64-encoded input with layout: [8-byte IV][ciphertext].
+/// Handles AES-CNG (CBC mode) decryption.
+/// Expects Base64-encoded input with layout: [16-byte IV][ciphertext].
 /// </summary>
-#pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms - TripleDES support is intentional for compatibility
-internal sealed class TripleDesDecryptor : TripleDesCryptor, ICryptor
+internal sealed class AesCngDecryptor : AesCngCryptor, ICryptor
 {
     #region Properties
 
@@ -79,18 +75,19 @@ internal sealed class TripleDesDecryptor : TripleDesCryptor, ICryptor
     #region Methods and functions
 
     /// <summary>
-    /// Decrypts the Triple DES encoded input string.
+    /// Decrypts the AES-CNG (CBC) encoded input string.
     /// </summary>
     /// <param name="input">The Base64-encoded ciphertext (IV prepended) to decrypt</param>
-    /// <returns>A <see cref="CryptResult"/> containing the decoded text</returns>
+    /// <returns>A <see cref="CryptResult"/> containing the decrypted text</returns>
     public async Task<CryptResult> ConvertAsync(string input)
     {
         string? msg = null;
         string? output = null;
         byte[]? plainText = null;
+
         try
         {
-            using var tripleDes = TripleDES.Create();
+            using var aesCng = new AesCng();
             var settings = GetSettings();
 
             if (settings is not null)
@@ -102,10 +99,10 @@ internal sealed class TripleDesDecryptor : TripleDesCryptor, ICryptor
                     var ivBytes    = inputBytes[..IvSize];
                     var cipherText = inputBytes[IvSize..];
 
-                    var decryptor = tripleDes.CreateDecryptor(keyBytes, ivBytes);
-                    using var memStream = new MemoryStream(cipherText);
+                    var decryptor = aesCng.CreateDecryptor(keyBytes, ivBytes);
+                    using var memStream   = new MemoryStream(cipherText);
                     using var cryptoStream = new CryptoStream(memStream, decryptor, CryptoStreamMode.Read);
-                    using var memOutput = new MemoryStream();
+                    using var memOutput   = new MemoryStream();
                     await cryptoStream.CopyToAsync(memOutput);
                     plainText = memOutput.ToArray();
                     output = Crypt.BytesToString(plainText, settings.SettingsViewModel.UseUnicode);
@@ -129,15 +126,13 @@ internal sealed class TripleDesDecryptor : TripleDesCryptor, ICryptor
 
     #endregion
 }
-#pragma warning restore CA5350
 
 /// <summary>
-/// Handles Triple DES encryption.
-/// Output layout (Base64-encoded): [8-byte IV][ciphertext].
+/// Handles AES-CNG (CBC mode) encryption.
+/// Output layout (Base64-encoded): [16-byte IV][ciphertext].
 /// A fresh random IV is generated for each call.
 /// </summary>
-#pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms - TripleDES support is intentional for compatibility
-internal sealed class TripleDesEncryptor : TripleDesCryptor, ICryptor
+internal sealed class AesCngEncryptor : AesCngCryptor, ICryptor
 {
     #region Properties
 
@@ -149,7 +144,7 @@ internal sealed class TripleDesEncryptor : TripleDesCryptor, ICryptor
     #region Methods and functions
 
     /// <summary>
-    /// Triple DES encrypts the input string. A fresh random IV is generated for each call.
+    /// AES-CNG (CBC) encrypts the input string. A fresh random IV is generated for each call.
     /// </summary>
     /// <param name="input">The input string</param>
     /// <returns>A <see cref="CryptResult"/> containing the Base64-encoded output (IV + ciphertext)</returns>
@@ -158,9 +153,10 @@ internal sealed class TripleDesEncryptor : TripleDesCryptor, ICryptor
         string? msg = null;
         string? output = null;
         var plainText = Array.Empty<byte>();
+
         try
         {
-            using var tripleDes = TripleDES.Create();
+            using var aesCng = new AesCng();
             var settings = GetSettings();
 
             if (settings is not null)
@@ -168,11 +164,11 @@ internal sealed class TripleDesEncryptor : TripleDesCryptor, ICryptor
                 var keyBytes = Crypt.SecureStringToBytes(settings.SettingsViewModel.Key);
                 try
                 {
-                    plainText      = Crypt.StringToBytes(input, settings.SettingsViewModel.UseUnicode);
-                    var ivBytes    = RandomNumberGenerator.GetBytes(IvSize);
-                    var encryptor  = tripleDes.CreateEncryptor(keyBytes, ivBytes);
+                    plainText     = Crypt.StringToBytes(input, settings.SettingsViewModel.UseUnicode);
+                    var ivBytes   = RandomNumberGenerator.GetBytes(IvSize);
+                    var encryptor = aesCng.CreateEncryptor(keyBytes, ivBytes);
 
-                    using var memOutput = new MemoryStream();
+                    using var memOutput    = new MemoryStream();
                     using var cryptoStream = new CryptoStream(memOutput, encryptor, CryptoStreamMode.Write);
                     await cryptoStream.WriteAsync(plainText);
                     await cryptoStream.FlushFinalBlockAsync();
@@ -200,4 +196,3 @@ internal sealed class TripleDesEncryptor : TripleDesCryptor, ICryptor
 
     #endregion
 }
-#pragma warning restore CA5350

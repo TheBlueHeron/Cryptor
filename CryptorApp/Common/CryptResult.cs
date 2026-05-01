@@ -1,16 +1,17 @@
 ﻿namespace CryptorApp;
 
 /// <summary>
-/// The result of a crypt operation.
+/// The immutable result of a crypt operation.
 /// </summary>
-public struct CryptResult
+public readonly record struct CryptResult
 {
-    /// <summary>
-    /// Any error message. May be null.
-    /// </summary>
-    public string? Error { get; set; }
     /// <summary>
     /// The result of the operation. May be null.
     /// </summary>
-    public string? Output { get; set; }
+    public string? Output { get; init; }
+
+    /// <summary>
+    /// Any error message. May be null.
+    /// </summary>
+    public string? Error { get; init; }
 }

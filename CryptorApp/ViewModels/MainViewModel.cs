@@ -34,7 +34,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// </summary>
     public MainViewModel()
     {
-        mAllConverters = [new Base64Decryptor(), new Base64Encryptor(), new HexDecryptor(), new HexEncryptor(), new HtmlDecryptor(), new HtmlEncryptor(), new UrlDecryptor(), new UrlEncryptor(), new AesDecryptor(), new AesEncryptor(), new ChaCha20Decryptor(), new ChaCha20Encryptor(), new TripleDesDecryptor(), new TripleDesEncryptor(), new Sha256Encryptor(), new Sha512Encryptor()];
+        mAllConverters = [new Base64Decryptor(), new Base64Encryptor(), new HexDecryptor(), new HexEncryptor(), new HtmlDecryptor(), new HtmlEncryptor(), new UrlDecryptor(), new UrlEncryptor(), new AesGcmDecryptor(), new AesGcmEncryptor(), new AesCcmDecryptor(), new AesCcmEncryptor(), new AesCngDecryptor(), new AesCngEncryptor(), new ChaCha20Decryptor(), new ChaCha20Encryptor(), new TripleDesDecryptor(), new TripleDesEncryptor(), new Sha256Encryptor(), new Sha512Encryptor()];
         Converters = new ObservableCollection<ICryptor>(mAllConverters.Where(c => c.Mode == CryptMode.Decode));
     }
 

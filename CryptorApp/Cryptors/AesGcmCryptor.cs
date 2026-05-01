@@ -1,14 +1,12 @@
 using CryptorApp.Resources;
 using System.Security.Cryptography;
-using System.Windows.Controls;
-using CryptorApp.Views;
 
 namespace CryptorApp.Cryptors;
 
 /// <summary>
 /// Base class for AES-GCM encryption and decryption.
 /// </summary>
-internal abstract class AesCryptor : IDisposable
+internal abstract class AesGcmCryptor : CryptorBase
 {
     #region Objects and variables
 
@@ -16,29 +14,22 @@ internal abstract class AesCryptor : IDisposable
     private const int _TAG_SIZE   = 16; // 128-bit authentication tag
     private const string _VALIDATION = "Requires a Key of 16, 24, or 32 bytes (8, 12, or 16 Unicode characters).";
 
-    private CryptSettings? mSettings;
+    protected static int NonceSize => _NONCE_SIZE;
+    protected static int TagSize => _TAG_SIZE;
 
     #endregion
 
     #region Properties
 
-    /// <summary>
-    /// Gets the name of the <see cref="ICryptor"/>.
-    /// </summary>
-    public abstract string Name { get; }
+    /// <inheritdoc/>
+    public override string Name => "Aes (GCM)";
+
+    /// <inheritdoc/>
+    protected override bool ShowKey => true;
 
     #endregion
 
-    #region Methods and functions
-
-    /// <summary>
-    /// Gets the settings <see cref="UserControl"/> for this <see cref="ICryptor"/>.
-    /// </summary>
-    public async Task<UserControl?> GetSettingsAsync()
-    {
-        mSettings ??= new CryptSettings(showKey: true);
-        return mSettings;
-    }
+    #region Public methods and functions
 
     /// <summary>
     /// Determines whether the <see cref="ICryptor"/>'s settings are valid.
@@ -46,14 +37,16 @@ internal abstract class AesCryptor : IDisposable
     /// The IV is generated randomly per operation and is not user-supplied.
     /// </summary>
     /// <param name="msg">Will contain a validation message if validation failed</param>
-    public bool IsValid(ref string? msg)
+    public override bool IsValid(ref string? msg)
     {
-        if (mSettings is null)
+        var settings = GetSettings();
+
+        if (settings is null)
         {
             return false;
         }
 
-        var keyBytes = Crypt.SecureStringToBytes(mSettings.SettingsViewModel.Key);
+        var keyBytes = Crypt.SecureStringToBytes(settings.SettingsViewModel.Key);
         var valid = keyBytes.Length is 16 or 24 or 32;
         Array.Clear(keyBytes);
 
@@ -64,21 +57,6 @@ internal abstract class AesCryptor : IDisposable
         return valid;
     }
 
-    /// <summary>
-    /// Returns the <see cref="Name"/> value.
-    /// </summary>
-    public override string ToString() => Name;
-
-    /// <inheritdoc/>
-    public void Dispose() => mSettings?.Dispose();
-
-    #endregion
-
-    #region Protected helpers
-
-    protected static int NonceSize => _NONCE_SIZE;
-    protected static int TagSize => _TAG_SIZE;
-
     #endregion
 }
 
@@ -86,17 +64,12 @@ internal abstract class AesCryptor : IDisposable
 /// Handles AES-GCM decryption.
 /// Expects Base64-encoded input with layout: [12-byte nonce][16-byte tag][ciphertext].
 /// </summary>
-internal sealed class AesDecryptor : AesCryptor, ICryptor
+internal sealed class AesGcmDecryptor : AesGcmCryptor, ICryptor
 {
     #region Properties
 
-    /// <summary>
-    /// Gets the <see cref="CryptMode"/>.
-    /// </summary>
-    public CryptMode Mode => CryptMode.Decode;
-
     /// <inheritdoc/>
-    public override string Name => "Aes (GCM) Decoding";
+    public override CryptMode Mode => CryptMode.Decode;
 
     #endregion
 
@@ -107,14 +80,14 @@ internal sealed class AesDecryptor : AesCryptor, ICryptor
     /// </summary>
     /// <param name="input">The Base64-encoded ciphertext (nonce + tag + ciphertext) to decrypt</param>
     /// <returns>A <see cref="CryptResult"/> containing the decrypted text</returns>
-    public async Task<CryptResult> ConvertAsync(string input)
+    public Task<CryptResult> ConvertAsync(string input)
     {
         string? msg = null;
         string? output = null;
         var plainText = Array.Empty<byte>();
         try
         {
-            var settings = (await GetSettingsAsync()) as CryptSettings;
+            var settings = GetSettings();
 
             if (settings is not null)
             {
@@ -142,7 +115,7 @@ internal sealed class AesDecryptor : AesCryptor, ICryptor
         {
             msg = Strings.Status_ErrCrypt;
         }
-        return new CryptResult { Output = output, Error = msg };
+        return Task.FromResult(new CryptResult { Output = output, Error = msg });
     }
 
     #endregion
@@ -152,17 +125,12 @@ internal sealed class AesDecryptor : AesCryptor, ICryptor
 /// Handles AES-GCM encryption.
 /// Output layout (Base64-encoded): [12-byte nonce][16-byte tag][ciphertext].
 /// </summary>
-internal sealed class AesEncryptor : AesCryptor, ICryptor
+internal sealed class AesGcmEncryptor : AesGcmCryptor, ICryptor
 {
     #region Properties
 
-    /// <summary>
-    /// Gets the <see cref="CryptMode"/>.
-    /// </summary>
-    public CryptMode Mode => CryptMode.Encode;
-
     /// <inheritdoc/>
-    public override string Name => "Aes (GCM) Encoding";
+    public override CryptMode Mode => CryptMode.Encode;
 
     #endregion
 
@@ -173,14 +141,14 @@ internal sealed class AesEncryptor : AesCryptor, ICryptor
     /// </summary>
     /// <param name="input">The input string</param>
     /// <returns>A <see cref="CryptResult"/> containing the Base64-encoded output (nonce + tag + ciphertext)</returns>
-    public async Task<CryptResult> ConvertAsync(string input)
+    public Task<CryptResult> ConvertAsync(string input)
     {
         string? msg = null;
         string? output = null;
         var plainText = Array.Empty<byte>();
         try
         {
-            var settings = (await GetSettingsAsync()) as CryptSettings;
+            var settings = GetSettings();
 
             if (settings is not null)
             {
@@ -213,9 +181,8 @@ internal sealed class AesEncryptor : AesCryptor, ICryptor
         {
             msg = Strings.Status_ErrCrypt;
         }
-        return new CryptResult { Output = output, Error = msg };
+        return Task.FromResult(new CryptResult { Output = output, Error = msg });
     }
 
     #endregion
 }
-
